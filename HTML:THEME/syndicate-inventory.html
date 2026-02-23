@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SYNDICATE — Inventory</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:         #0a0a0b;
+    --bg2:        #111114;
+    --bg3:        #18181d;
+    --bg4:        #1e1e26;
+    --border:     #2a2a35;
+    --border2:    #3a3a48;
+    --red:        #e03c3c;
+    --red-dim:    #7a1f1f;
+    --gold:       #c9a84c;
+    --gold-dim:   #6b5520;
+    --gold-glow:  rgba(201,168,76,0.12);
+    --green:      #3cba6e;
+    --green-dim:  #1a5c35;
+    --blue:       #4a90d9;
+    --blue-dim:   #1e3f6a;
+    --purple:     #a855f7;
+    --purple-dim: #4c1d95;
+    --orange:     #f97316;
+    --orange-dim: #7c2d12;
+    --muted:      #55556a;
+    --text:       #d0d0e0;
+    --text-dim:   #7a7a90;
+    --mono:       'Share Tech Mono', monospace;
+    --heading:    'Bebas Neue', cursive;
+    --body:       'Barlow', sans-serif;
+
+    /* rarity colours */
+    --r-common:    #7a7a90;
+    --r-uncommon:  #3cba6e;
+    --r-rare:      #4a90d9;
+    --r-epic:      #a855f7;
+    --r-legendary: #c9a84c;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: var(--body); font-size: 13px; min-height: 100vh; }
+  body::after {
+    content: ''; position: fixed; inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.025) 2px, rgba(0,0,0,0.025) 4px);
+    pointer-events: none; z-index: 9999;
+  }
+
+  /* ── TOP BAR ── */
+  .topbar {
+    background: var(--bg2); border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; padding: 0 20px; height: 48px; gap: 20px;
+    position: sticky; top: 0; z-index: 200;
+  }
+  .logo { font-family: var(--heading); font-size: 26px; letter-spacing: 4px; color: var(--gold); text-shadow: 0 0 20px rgba(201,168,76,0.4); }
+  .topbar-nav { display: flex; gap: 2px; margin-left: 8px; }
+  .topbar-link { padding: 5px 12px; font-family: var(--mono); font-size: 10px; letter-spacing: 1px; color: var(--text-dim); cursor: pointer; border-radius: 3px; transition: all 0.15s; text-transform: uppercase; }
+  .topbar-link:hover { background: var(--bg3); color: var(--text); }
+  .topbar-link.active { background: var(--gold-glow); color: var(--gold); }
+  .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 16px; }
+  .topbar-stat { font-family: var(--mono); font-size: 11px; color: var(--text-dim); }
+  .topbar-stat span { color: var(--text); }
+  .topbar-cash { font-family: var(--mono); font-size: 13px; color: var(--gold); }
+  .topbar-avatar { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, var(--red-dim), var(--gold-dim)); border: 1px solid var(--gold); display: flex; align-items: center; justify-content: center; font-family: var(--heading); font-size: 14px; color: var(--gold); }
+
+  /* ── LAYOUT ── */
+  .layout { display: flex; min-height: calc(100vh - 48px); }
+
+  /* ── SIDEBAR ── */
+  .sidebar { width: 180px; background: var(--bg2); border-right: 1px solid var(--border); padding: 12px 0; flex-shrink: 0; position: sticky; top: 48px; height: calc(100vh - 48px); overflow-y: auto; }
+  .nav-section { margin-bottom: 8px; }
+  .nav-label { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); padding: 8px 16px 4px; font-family: var(--mono); }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 16px; cursor: pointer; transition: all 0.15s; border-left: 2px solid transparent; color: var(--text-dim); font-size: 12px; }
+  .nav-item:hover { background: var(--bg3); color: var(--text); border-left-color: var(--border2); }
+  .nav-item.active { background: var(--gold-glow); color: var(--gold); border-left-color: var(--gold); }
+  .nav-icon { font-size: 14px; width: 16px; text-align: center; }
+  .nav-badge { margin-left: auto; background: var(--red); color: white; font-size: 9px; padding: 1px 5px; border-radius: 8px; }
+
+  /* ── MAIN ── */
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+  /* ── PAGE HEADER ── */
+  .page-header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg2);
+    display: flex; align-items: flex-end; gap: 24px;
+    flex-wrap: wrap;
+  }
+  .page-title-block {}
+  .page-title { font-family: var(--heading); font-size: 32px; letter-spacing: 4px; color: var(--text); line-height: 1; }
+  .page-subtitle { font-family: var(--mono); font-size: 10px; color: var(--text-dim); margin-top: 4px; letter-spacing: 1px; }
+
+  .equip-summary {
+    display: flex; gap: 12px; flex-wrap: wrap;
+  }
+  .equip-slot {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--bg3); border: 1px solid var(--border); border-radius: 5px;
+    padding: 8px 12px; cursor: pointer; transition: all 0.15s;
+    position: relative;
+  }
+  .equip-slot:hover { border-color: var(--border2); }
+  .equip-slot.has-item { border-color: var(--gold-dim); }
+  .equip-slot-icon { font-size: 20px; }
+  .equip-slot-info {}
+  .equip-slot-label { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; font-family: var(--mono); }
+  .equip-slot-name { font-size: 11px; color: var(--text); font-weight: 500; margin-top: 1px; }
+  .equip-slot-bonus { font-family: var(--mono); font-size: 10px; color: var(--gold); }
+
+  .header-actions { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+  .btn { padding: 7px 14px; border-radius: 4px; cursor: pointer; font-family: var(--mono); font-size: 11px; border: 1px solid; transition: all 0.15s; letter-spacing: 0.5px; }
+  .btn-primary { background: var(--gold-dim); border-color: var(--gold); color: var(--gold); }
+  .btn-primary:hover { background: var(--gold); color: var(--bg); }
+  .btn-ghost { background: transparent; border-color: var(--border); color: var(--text-dim); }
+  .btn-ghost:hover { border-color: var(--border2); color: var(--text); }
+  .btn-sm { padding: 5px 10px; font-size: 10px; }
+  .btn-red { background: rgba(224,60,60,0.1); border-color: var(--red-dim); color: var(--red); }
+  .btn-red:hover { background: var(--red); color: white; }
+  .btn-green { background: rgba(60,186,110,0.1); border-color: var(--green-dim); color: var(--green); }
+  .btn-green:hover { background: var(--green); color: var(--bg); }
+
+  /* ── FILTER BAR ── */
+  .filter-bar {
+    padding: 12px 24px;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  }
+  .filter-tabs { display: flex; gap: 2px; }
+  .filter-tab {
+    padding: 5px 14px; font-family: var(--mono); font-size: 10px; letter-spacing: 1px;
+    text-transform: uppercase; color: var(--text-dim); cursor: pointer;
+    border: 1px solid var(--border); border-radius: 3px; transition: all 0.15s;
+  }
+  .filter-tab:hover { color: var(--text); border-color: var(--border2); }
+  .filter-tab.active { background: var(--gold-glow); color: var(--gold); border-color: var(--gold-dim); }
+  .filter-sep { width: 1px; height: 24px; background: var(--border); }
+  .rarity-filters { display: flex; gap: 4px; }
+  .rarity-dot {
+    width: 28px; height: 28px; border-radius: 4px; cursor: pointer;
+    border: 2px solid transparent; transition: all 0.15s;
+    display: flex; align-items: center; justify-content: center; font-size: 12px;
+  }
+  .rarity-dot:hover, .rarity-dot.active { border-color: currentColor; transform: scale(1.1); }
+  .rd-all     { color: var(--text-dim); background: var(--bg3); }
+  .rd-common  { color: var(--r-common);    background: rgba(122,122,144,0.1); }
+  .rd-uncommon{ color: var(--r-uncommon);  background: rgba(60,186,110,0.1); }
+  .rd-rare    { color: var(--r-rare);      background: rgba(74,144,217,0.1); }
+  .rd-epic    { color: var(--r-epic);      background: rgba(168,85,247,0.1); }
+  .rd-legendary{ color: var(--r-legendary);background: rgba(201,168,76,0.1); }
+
+  .search-box {
+    margin-left: auto;
+    display: flex; align-items: center; gap: 6px;
+    background: var(--bg3); border: 1px solid var(--border); border-radius: 4px; padding: 5px 10px;
+  }
+  .search-box input {
+    background: none; border: none; outline: none; color: var(--text);
+    font-family: var(--mono); font-size: 11px; width: 160px;
+  }
+  .search-box input::placeholder { color: var(--muted); }
+  .sort-select {
+    background: var(--bg3); border: 1px solid var(--border); border-radius: 4px;
+    padding: 5px 10px; color: var(--text-dim); font-family: var(--mono); font-size: 10px;
+    cursor: pointer; outline: none;
+  }
+  .sort-select:focus { border-color: var(--border2); }
+
+  /* ── CONTENT AREA ── */
+  .content-area {
+    display: flex; flex: 1; overflow: hidden;
+  }
+
+  /* ── INVENTORY GRID ── */
+  .inv-grid-wrap {
+    flex: 1; overflow-y: auto; padding: 20px 24px;
+  }
+  .inv-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 10px;
+  }
+
+  /* ── ITEM CARD ── */
+  .item-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.18s;
+    position: relative;
+    animation: card-in 0.3s ease both;
+  }
+  @keyframes card-in { from { opacity:0; transform:scale(0.94); } to { opacity:1; transform:scale(1); } }
+  .item-card:hover { border-color: var(--border2); transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
+  .item-card.selected { box-shadow: 0 0 0 2px var(--gold); border-color: var(--gold); }
+  .item-card.equipped { box-shadow: 0 0 0 2px var(--green); border-color: var(--green); }
+
+  /* rarity left border */
+  .item-card::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+  }
+  .item-card.rarity-common::before    { background: var(--r-common); }
+  .item-card.rarity-uncommon::before  { background: var(--r-uncommon); }
+  .item-card.rarity-rare::before      { background: var(--r-rare); }
+  .item-card.rarity-epic::before      { background: var(--r-epic); }
+  .item-card.rarity-legendary::before { background: var(--r-legendary); box-shadow: 2px 0 12px var(--r-legendary); }
+
+  .item-img {
+    height: 80px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 38px;
+    background: var(--bg3);
+    position: relative;
+  }
+  .item-qty {
+    position: absolute; top: 6px; right: 6px;
+    background: rgba(0,0,0,0.7); border: 1px solid var(--border);
+    border-radius: 3px; padding: 1px 6px;
+    font-family: var(--mono); font-size: 10px; color: var(--text-dim);
+  }
+  .item-equipped-badge {
+    position: absolute; top: 6px; left: 8px;
+    background: rgba(60,186,110,0.2); border: 1px solid var(--green-dim);
+    border-radius: 2px; padding: 1px 5px;
+    font-family: var(--mono); font-size: 9px; color: var(--green);
+  }
+  .item-info { padding: 8px 10px 10px; }
+  .item-name { font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 2px; line-height: 1.2; }
+  .item-type { font-family: var(--mono); font-size: 9px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
+  .item-stat { font-family: var(--mono); font-size: 10px; margin-top: 4px; }
+
+  /* rarity label colours */
+  .rar-common   { color: var(--r-common); }
+  .rar-uncommon { color: var(--r-uncommon); }
+  .rar-rare     { color: var(--r-rare); }
+  .rar-epic     { color: var(--r-epic); }
+  .rar-legendary{ color: var(--r-legendary); }
+
+  /* ── DETAIL PANEL ── */
+  .detail-panel {
+    width: 300px; flex-shrink: 0;
+    background: var(--bg2); border-left: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    overflow-y: auto;
+    transition: all 0.25s;
+  }
+  .detail-empty {
+    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 10px; color: var(--muted); font-family: var(--mono); font-size: 11px; text-align: center; padding: 24px;
+  }
+  .detail-empty-icon { font-size: 40px; opacity: 0.3; }
+
+  .detail-header {
+    position: relative; height: 120px;
+    display: flex; align-items: center; justify-content: center; font-size: 56px;
+    background: var(--bg3);
+    border-bottom: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .detail-header::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(circle at 50% 50%, var(--rarity-color, rgba(201,168,76,0.1)), transparent 70%);
+  }
+  .detail-rarity-strip {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    height: 3px;
+  }
+
+  .detail-body { padding: 16px; flex: 1; }
+  .detail-name { font-family: var(--heading); font-size: 22px; letter-spacing: 2px; color: var(--text); line-height: 1.1; margin-bottom: 4px; }
+  .detail-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+  .tag {
+    font-family: var(--mono); font-size: 9px; letter-spacing: 1px;
+    padding: 2px 8px; border-radius: 3px; text-transform: uppercase;
+    border: 1px solid;
+  }
+  .tag-type   { color: var(--text-dim); border-color: var(--border); }
+  .tag-common    { color: var(--r-common);    border-color: rgba(122,122,144,0.4);  background: rgba(122,122,144,0.08); }
+  .tag-uncommon  { color: var(--r-uncommon);  border-color: rgba(60,186,110,0.4);  background: rgba(60,186,110,0.08); }
+  .tag-rare      { color: var(--r-rare);      border-color: rgba(74,144,217,0.4);  background: rgba(74,144,217,0.08); }
+  .tag-epic      { color: var(--r-epic);      border-color: rgba(168,85,247,0.4);  background: rgba(168,85,247,0.08); }
+  .tag-legendary { color: var(--r-legendary); border-color: rgba(201,168,76,0.4);  background: rgba(201,168,76,0.08); }
+
+  .detail-desc { font-size: 12px; color: var(--text-dim); line-height: 1.6; margin-bottom: 16px; }
+  .detail-divider { height: 1px; background: var(--border); margin: 14px 0; }
+
+  .stat-list { display: flex; flex-direction: column; gap: 8px; }
+  .stat-line { display: flex; justify-content: space-between; align-items: center; }
+  .stat-line-key { font-family: var(--mono); font-size: 10px; color: var(--text-dim); }
+  .stat-line-val { font-family: var(--mono); font-size: 11px; font-weight: 600; }
+  .pos { color: var(--green); }
+  .neg { color: var(--red); }
+  .neu { color: var(--text); }
+  .gld { color: var(--gold); }
+
+  .detail-actions { padding: 14px 16px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; }
+  .detail-action-row { display: flex; gap: 8px; }
+  .detail-action-row .btn { flex: 1; text-align: center; }
+
+  .qty-control { display: flex; align-items: center; gap: 8px; background: var(--bg3); border: 1px solid var(--border); border-radius: 4px; padding: 5px 10px; }
+  .qty-btn { background: var(--border); border: none; color: var(--text); width: 20px; height: 20px; border-radius: 3px; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; transition: background 0.1s; }
+  .qty-btn:hover { background: var(--border2); }
+  .qty-val { font-family: var(--mono); font-size: 12px; color: var(--text); min-width: 20px; text-align: center; }
+
+  /* ── TOAST ── */
+  .toast-area { position: fixed; bottom: 24px; right: 24px; display: flex; flex-direction: column; gap: 8px; z-index: 1000; }
+  .toast {
+    background: var(--bg2); border: 1px solid var(--border2); border-radius: 6px;
+    padding: 10px 16px; font-family: var(--mono); font-size: 11px;
+    display: flex; align-items: center; gap: 10px; min-width: 220px;
+    animation: toast-in 0.3s ease;
+  }
+  @keyframes toast-in { from { opacity:0; transform: translateX(16px); } }
+  .toast.success { border-left: 3px solid var(--green); }
+  .toast.fail    { border-left: 3px solid var(--red); }
+  .toast.info    { border-left: 3px solid var(--gold); }
+
+  /* ── CONFIRM MODAL ── */
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 500; }
+  .overlay.show { display: flex; }
+  .modal { background: var(--bg2); border: 1px solid var(--border2); border-radius: 8px; width: 360px; overflow: hidden; animation: modal-in 0.2s ease; }
+  @keyframes modal-in { from { opacity:0; transform: scale(0.95) translateY(8px); } }
+  .modal-hdr { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .modal-title { font-family: var(--heading); font-size: 18px; letter-spacing: 2px; }
+  .modal-x { cursor: pointer; color: var(--muted); font-size: 18px; line-height: 1; }
+  .modal-x:hover { color: var(--text); }
+  .modal-body { padding: 18px; font-size: 13px; color: var(--text-dim); line-height: 1.6; }
+  .modal-ftr { padding: 12px 18px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 8px; }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* empty state */
+  .no-results { text-align: center; padding: 60px 20px; color: var(--muted); font-family: var(--mono); font-size: 12px; }
+  .no-results-icon { font-size: 36px; margin-bottom: 12px; opacity: 0.4; }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="logo">SYNDICATE</div>
+  <div class="topbar-nav">
+    <div class="topbar-link">Crimes</div>
+    <div class="topbar-link">Profile</div>
+    <div class="topbar-link">Attack</div>
+    <div class="topbar-link active">Inventory</div>
+    <div class="topbar-link">Market</div>
+  </div>
+  <div class="topbar-right">
+    <div class="topbar-stat">⚡ <span>74</span></div>
+    <div class="topbar-stat">🔥 <span>31</span></div>
+    <div class="topbar-stat">❤️ <span>100</span></div>
+    <div class="topbar-cash" id="cash-display">$24,850</div>
+    <div class="topbar-avatar">G</div>
+  </div>
+</div>
+
+<div class="layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="nav-section">
+      <div class="nav-label">Character</div>
+      <div class="nav-item"><span class="nav-icon">👤</span> Profile</div>
+      <div class="nav-item active"><span class="nav-icon">🎒</span> Inventory</div>
+      <div class="nav-item"><span class="nav-icon">📚</span> Education</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Actions</div>
+      <div class="nav-item"><span class="nav-icon">🗡</span> Crimes</div>
+      <div class="nav-item"><span class="nav-icon">⚔️</span> Attack</div>
+      <div class="nav-item"><span class="nav-icon">✈️</span> Travel</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Economy</div>
+      <div class="nav-item"><span class="nav-icon">🛒</span> Shop</div>
+      <div class="nav-item"><span class="nav-icon">📈</span> Market</div>
+      <div class="nav-item"><span class="nav-icon">🎲</span> Casino</div>
+      <div class="nav-item"><span class="nav-icon">🏦</span> Bank</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Social</div>
+      <div class="nav-item"><span class="nav-icon">🏴</span> Faction</div>
+      <div class="nav-item"><span class="nav-icon">✉️</span> Mail <span class="nav-badge">3</span></div>
+      <div class="nav-item"><span class="nav-icon">💬</span> Forums</div>
+      <div class="nav-item"><span class="nav-icon">🏆</span> Rankings</div>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <!-- PAGE HEADER -->
+    <div class="page-header">
+      <div class="page-title-block">
+        <div class="page-title">🎒 INVENTORY</div>
+        <div class="page-subtitle" id="inv-subtitle">Loading items...</div>
+      </div>
+
+      <div class="equip-summary" id="equip-summary">
+        <!-- filled by JS -->
+      </div>
+
+      <div class="header-actions">
+        <button class="btn btn-ghost btn-sm" onclick="showModal('unequip-all')">Unequip All</button>
+        <button class="btn btn-primary btn-sm" onclick="goShop()">🛒 Visit Shop</button>
+      </div>
+    </div>
+
+    <!-- FILTER BAR -->
+    <div class="filter-bar">
+      <div class="filter-tabs" id="filter-tabs">
+        <div class="filter-tab active" data-filter="all"    onclick="setFilter('all',this)">All</div>
+        <div class="filter-tab"        data-filter="weapon" onclick="setFilter('weapon',this)">Weapons</div>
+        <div class="filter-tab"        data-filter="armor"  onclick="setFilter('armor',this)">Armor</div>
+        <div class="filter-tab"        data-filter="drug"   onclick="setFilter('drug',this)">Drugs</div>
+        <div class="filter-tab"        data-filter="consumable" onclick="setFilter('consumable',this)">Consumables</div>
+        <div class="filter-tab"        data-filter="misc"   onclick="setFilter('misc',this)">Misc</div>
+      </div>
+      <div class="filter-sep"></div>
+      <div class="rarity-filters">
+        <div class="rarity-dot rd-all active" title="All" onclick="setRarity('all',this)">★</div>
+        <div class="rarity-dot rd-common"    title="Common"    onclick="setRarity('common',this)">●</div>
+        <div class="rarity-dot rd-uncommon"  title="Uncommon"  onclick="setRarity('uncommon',this)">●</div>
+        <div class="rarity-dot rd-rare"      title="Rare"      onclick="setRarity('rare',this)">●</div>
+        <div class="rarity-dot rd-epic"      title="Epic"      onclick="setRarity('epic',this)">●</div>
+        <div class="rarity-dot rd-legendary" title="Legendary" onclick="setRarity('legendary',this)">●</div>
+      </div>
+      <select class="sort-select" id="sort-select" onchange="renderGrid()">
+        <option value="name">Sort: Name</option>
+        <option value="rarity">Sort: Rarity</option>
+        <option value="type">Sort: Type</option>
+        <option value="value">Sort: Value</option>
+      </select>
+      <div class="search-box">
+        <span style="color:var(--muted);font-size:12px">🔍</span>
+        <input id="search-input" placeholder="Search items..." oninput="renderGrid()">
+      </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content-area">
+      <!-- GRID -->
+      <div class="inv-grid-wrap">
+        <div class="inv-grid" id="inv-grid"></div>
+      </div>
+
+      <!-- DETAIL PANEL -->
+      <div class="detail-panel" id="detail-panel">
+        <div class="detail-empty">
+          <div class="detail-empty-icon">🎒</div>
+          <div>Select an item<br>to view details</div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div class="overlay" id="overlay" onclick="closeOverlay(event)">
+  <div class="modal" id="modal">
+    <div class="modal-hdr">
+      <span class="modal-title" id="modal-title">CONFIRM</span>
+      <span class="modal-x" onclick="hideOverlay()">✕</span>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-ftr" id="modal-ftr"></div>
+  </div>
+</div>
+
+<!-- TOASTS -->
+<div class="toast-area" id="toast-area"></div>
+
+<script>
+// ─── DATA ────────────────────────────────────────────────────
+
+const rarityOrder = { common:0, uncommon:1, rare:2, epic:3, legendary:4 };
+const rarityColors = {
+  common:'#7a7a90', uncommon:'#3cba6e', rare:'#4a90d9', epic:'#a855f7', legendary:'#c9a84c'
+};
+
+let items = [
+  // WEAPONS
+  { id:1,  name:'Desert Eagle',      icon:'🔫', type:'weapon',     rarity:'epic',      qty:1,  atk:+85, def:0,   spd:-5,  sellPrice:9800,  desc:'A heavy semi-automatic pistol. Powerful and intimidating, with a kick that demands respect.', equipped:true, slot:'weapon' },
+  { id:2,  name:'Combat Knife',      icon:'🔪', type:'weapon',     rarity:'uncommon',  qty:1,  atk:+32, def:0,   spd:+8,  sellPrice:1200,  desc:'Lightweight and fast. Perfect for up-close encounters where speed matters.', equipped:false },
+  { id:3,  name:'Sawn-Off Shotgun',  icon:'💥', type:'weapon',     rarity:'rare',      qty:1,  atk:+60, def:0,   spd:-12, sellPrice:5400,  desc:'Brutal stopping power at close range. Loud, messy, effective.', equipped:false },
+  { id:4,  name:'AK-74',             icon:'🪖', type:'weapon',     rarity:'rare',      qty:1,  atk:+72, def:0,   spd:-8,  sellPrice:7200,  desc:'Reliable and ruthless. The weapon of choice for seasoned street soldiers.', equipped:false },
+  { id:5,  name:'Switchblade',       icon:'🗡️', type:'weapon',     rarity:'common',    qty:2,  atk:+18, def:0,   spd:+12, sellPrice:400,   desc:'Concealable and quick to deploy. Basic but gets the job done.', equipped:false },
+  { id:6,  name:'Golden Revolver',   icon:'✨', type:'weapon',     rarity:'legendary', qty:1,  atk:+120,def:0,   spd:+5,  sellPrice:48000, desc:'Forged for one person. A symbol of absolute power in the underworld. Only the elite carry one.', equipped:false },
+
+  // ARMOR
+  { id:7,  name:'Kevlar Vest',       icon:'🦺', type:'armor',      rarity:'rare',      qty:1,  atk:0,   def:+55, spd:-6,  sellPrice:4800,  desc:'Standard-issue protection for serious players. Stops most handgun rounds.', equipped:true, slot:'armor' },
+  { id:8,  name:'Leather Jacket',    icon:'🧥', type:'armor',      rarity:'common',    qty:1,  atk:0,   def:+18, spd:+4,  sellPrice:600,   desc:'Cheap protection that offers some defence without slowing you down.', equipped:false },
+  { id:9,  name:'Tactical Helmet',   icon:'⛑️', type:'armor',      rarity:'uncommon',  qty:1,  atk:0,   def:+28, spd:-2,  sellPrice:2200,  desc:'Protects your head from blunt impacts and shrapnel. Essential for close combat.', equipped:false },
+  { id:10, name:'Shadow Armour',     icon:'🌑', type:'armor',      rarity:'epic',      qty:1,  atk:0,   def:+90, spd:+10, sellPrice:22000, desc:'Experimental ceramic-composite plating. Lightweight and absurdly protective.', equipped:false },
+
+  // DRUGS
+  { id:11, name:'Adrenaline Shot',   icon:'💉', type:'drug',       rarity:'uncommon',  qty:4,  atk:+20, def:0,   spd:+30, sellPrice:800,   desc:'Floods your system with raw energy. +20 ATK +30 SPD for 10 minutes. Addiction risk: Low.', equipped:false, duration:'10 min', addiction:'Low' },
+  { id:12, name:'Steroids',          icon:'💊', type:'drug',       rarity:'rare',      qty:2,  atk:+45, def:+15, spd:-10, sellPrice:3200,  desc:'Heavy-duty muscle amplification. Devastating attack boost but slows your movement. Addiction risk: Medium.', equipped:false, duration:'20 min', addiction:'Medium' },
+  { id:13, name:'Xanax',             icon:'😴', type:'drug',       rarity:'common',    qty:8,  atk:0,   def:0,   spd:0,   sellPrice:200,   desc:'Restores 30 Happy. Takes the edge off. Mild addiction risk.', equipped:false, happy:+30, addiction:'Low' },
+  { id:14, name:'Vicodin',           icon:'🔵', type:'drug',       rarity:'uncommon',  qty:3,  atk:0,   def:0,   spd:0,   sellPrice:950,   desc:'Restores 50 HP. Powerful painkiller. Use with caution. Addiction risk: Medium.', equipped:false, hp:+50, addiction:'Medium' },
+  { id:15, name:'Ecstasy',           icon:'🟣', type:'drug',       rarity:'rare',      qty:1,  atk:0,   def:0,   spd:+50, sellPrice:2800,  desc:'Euphoric rush. Massively boosts speed and happy. Serious addiction risk. Not for the faint-hearted.', equipped:false, duration:'15 min', happy:+80, addiction:'High' },
+
+  // CONSUMABLES
+  { id:16, name:'Energy Drink',      icon:'⚡', type:'consumable', rarity:'common',    qty:12, atk:0,   def:0,   spd:0,   sellPrice:150,   desc:'Restores 25 Energy instantly. Cheap and stackable.', equipped:false, energy:+25 },
+  { id:17, name:'First Aid Kit',     icon:'🩺', type:'consumable', rarity:'uncommon',  qty:3,  atk:0,   def:0,   spd:0,   sellPrice:600,   desc:'Restores 60 HP when used outside of combat. Essential for long grind sessions.', equipped:false, hp:+60 },
+  { id:18, name:'Lockpick Set',      icon:'🔑', type:'consumable', rarity:'uncommon',  qty:2,  atk:0,   def:0,   spd:0,   sellPrice:1100,  desc:'Used to escape from jail. 70% success rate. Each use consumes one pick.', equipped:false },
+  { id:19, name:'Smoke Grenade',     icon:'💨', type:'consumable', rarity:'rare',      qty:1,  atk:0,   def:0,   spd:+40, sellPrice:2400,  desc:'Throw mid-combat to escape a losing fight. One-time use escape item.', equipped:false },
+
+  // MISC
+  { id:20, name:'Burner Phone',      icon:'📱', type:'misc',       rarity:'common',    qty:3,  atk:0,   def:0,   spd:0,   sellPrice:300,   desc:'Used for anonymous communication. Untraceable. Required for some black market dealings.', equipped:false },
+  { id:21, name:'Blood Diamond',     icon:'💎', type:'misc',       rarity:'legendary', qty:1,  atk:0,   def:0,   spd:0,   sellPrice:85000, desc:'Stolen from an overseas vault. Worth a fortune on the black market. Handle with extreme care.', equipped:false },
+  { id:22, name:'Forged Passport',   icon:'🪪', type:'misc',       rarity:'rare',      qty:1,  atk:0,   def:0,   spd:0,   sellPrice:6500,  desc:'Allows travel to restricted cities. Opens new crime territories. Required for Tokyo and Dubai.', equipped:false },
+];
+
+// Equipped slots
+let equippedSlots = {
+  weapon: items.find(i => i.slot === 'weapon') || null,
+  armor:  items.find(i => i.slot === 'armor')  || null,
+};
+
+let selectedId = null;
+let filterType = 'all';
+let filterRarity = 'all';
+let sellQty = 1;
+let cash = 24850;
+
+// ─── RENDER EQUIPPED SLOTS ───────────────────────────────────
+function renderEquippedSlots() {
+  const wrap = document.getElementById('equip-summary');
+  const slotDefs = [
+    { slot:'weapon', label:'Weapon', icon:'🔫' },
+    { slot:'armor',  label:'Armor',  icon:'🛡️' },
+  ];
+  wrap.innerHTML = slotDefs.map(s => {
+    const item = equippedSlots[s.slot];
+    return `<div class="equip-slot ${item ? 'has-item' : ''}" onclick="selectEquipped('${s.slot}')">
+      <div class="equip-slot-icon">${item ? item.icon : s.icon}</div>
+      <div class="equip-slot-info">
+        <div class="equip-slot-label">${s.label}</div>
+        <div class="equip-slot-name">${item ? item.name : '<span style="color:var(--muted)">Empty</span>'}</div>
+        ${item ? `<div class="equip-slot-bonus">${item.atk ? '+'+item.atk+' ATK' : ''} ${item.def ? '+'+item.def+' DEF' : ''}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function selectEquipped(slot) {
+  const item = equippedSlots[slot];
+  if (item) selectItem(item.id);
+}
+
+// ─── RENDER GRID ──────────────────────────────────────────────
+function renderGrid() {
+  const grid = document.getElementById('inv-grid');
+  const search = document.getElementById('search-input').value.toLowerCase();
+  const sort   = document.getElementById('sort-select').value;
+
+  let filtered = items.filter(i => {
+    if (filterType !== 'all' && i.type !== filterType) return false;
+    if (filterRarity !== 'all' && i.rarity !== filterRarity) return false;
+    if (search && !i.name.toLowerCase().includes(search)) return false;
+    return true;
+  });
+
+  filtered.sort((a, b) => {
+    if (sort === 'rarity') return rarityOrder[b.rarity] - rarityOrder[a.rarity];
+    if (sort === 'type')   return a.type.localeCompare(b.type);
+    if (sort === 'value')  return b.sellPrice - a.sellPrice;
+    return a.name.localeCompare(b.name);
+  });
+
+  document.getElementById('inv-subtitle').textContent = `${items.length} items · ${filtered.length} shown`;
+
+  if (filtered.length === 0) {
+    grid.innerHTML = `<div class="no-results" style="grid-column:1/-1"><div class="no-results-icon">🔍</div>No items found</div>`;
+    return;
+  }
+
+  grid.innerHTML = filtered.map((item, i) => {
+    const mainStat = item.atk ? `<span style="color:var(--red)">+${item.atk} ATK</span>`
+                   : item.def ? `<span style="color:var(--blue)">+${item.def} DEF</span>`
+                   : item.energy ? `<span style="color:var(--blue)">+${item.energy} NRG</span>`
+                   : item.hp ? `<span style="color:var(--green)">+${item.hp} HP</span>`
+                   : item.happy ? `<span style="color:var(--gold)">+${item.happy} 😊</span>`
+                   : `<span style="color:var(--muted)">—</span>`;
+    return `
+    <div class="item-card rarity-${item.rarity} ${item.id === selectedId ? 'selected' : ''} ${item.equipped ? 'equipped' : ''}"
+         style="animation-delay:${i * 0.025}s"
+         onclick="selectItem(${item.id})">
+      <div class="item-img">
+        ${item.equipped ? '<div class="item-equipped-badge">EQUIPPED</div>' : ''}
+        ${item.qty > 1 ? `<div class="item-qty">×${item.qty}</div>` : ''}
+        ${item.icon}
+      </div>
+      <div class="item-info">
+        <div class="item-name">${item.name}</div>
+        <div class="item-type rar-${item.rarity}">${item.rarity}</div>
+        <div class="item-stat">${mainStat}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ─── SELECT ITEM ─────────────────────────────────────────────
+function selectItem(id) {
+  selectedId = id;
+  sellQty = 1;
+  renderGrid();
+  renderDetail();
+}
+
+function renderDetail() {
+  const panel = document.getElementById('detail-panel');
+  if (!selectedId) { panel.innerHTML = `<div class="detail-empty"><div class="detail-empty-icon">🎒</div><div>Select an item<br>to view details</div></div>`; return; }
+  const item = items.find(i => i.id === selectedId);
+  if (!item) return;
+
+  const rc = rarityColors[item.rarity];
+  const isEquippable = item.type === 'weapon' || item.type === 'armor';
+  const slot = item.type === 'weapon' ? 'weapon' : item.type === 'armor' ? 'armor' : null;
+  const isEquipped = item.equipped;
+  const isUsable = ['drug','consumable'].includes(item.type);
+
+  const stats = [];
+  if (item.atk)   stats.push({ k:'Attack Bonus',  v:`+${item.atk}`,  cls:'pos' });
+  if (item.def)   stats.push({ k:'Defense Bonus', v:`+${item.def}`,  cls:'pos' });
+  if (item.spd && item.spd > 0) stats.push({ k:'Speed Bonus',  v:`+${item.spd}`, cls:'pos' });
+  if (item.spd && item.spd < 0) stats.push({ k:'Speed Penalty',v:`${item.spd}`,  cls:'neg' });
+  if (item.energy)stats.push({ k:'Energy Restore',v:`+${item.energy}`,cls:'pos' });
+  if (item.hp)    stats.push({ k:'HP Restore',    v:`+${item.hp}`,   cls:'pos' });
+  if (item.happy) stats.push({ k:'Happy Restore', v:`+${item.happy}`,cls:'pos' });
+  if (item.duration)  stats.push({ k:'Duration',      v:item.duration,  cls:'neu' });
+  if (item.addiction) stats.push({ k:'Addiction Risk', v:item.addiction, cls: item.addiction==='High'?'neg':item.addiction==='Medium'?'gld':'neu' });
+  stats.push({ k:'Quantity Owned', v:`×${item.qty}`, cls:'neu' });
+  stats.push({ k:'Sell Price',     v:`$${item.sellPrice.toLocaleString()}`, cls:'gld' });
+
+  panel.innerHTML = `
+    <div class="detail-header" style="--rarity-color:${rc}20">
+      <div style="font-size:56px;position:relative;z-index:1">${item.icon}</div>
+      <div class="detail-rarity-strip" style="background:${rc}"></div>
+    </div>
+    <div class="detail-body">
+      <div class="detail-name">${item.name}</div>
+      <div class="detail-tags">
+        <span class="tag tag-type">${item.type}</span>
+        <span class="tag tag-${item.rarity}">${item.rarity}</span>
+        ${isEquipped ? '<span class="tag" style="color:var(--green);border-color:rgba(60,186,110,0.4);background:rgba(60,186,110,0.08)">EQUIPPED</span>' : ''}
+      </div>
+      <div class="detail-desc">${item.desc}</div>
+      <div class="detail-divider"></div>
+      <div class="stat-list">
+        ${stats.map(s => `<div class="stat-line"><span class="stat-line-key">${s.k}</span><span class="stat-line-val ${s.cls}">${s.v}</span></div>`).join('')}
+      </div>
+    </div>
+    <div class="detail-actions">
+      ${isEquippable ? `
+        <div class="detail-action-row">
+          ${isEquipped
+            ? `<button class="btn btn-red" onclick="unequipItem(${item.id})">⬆ Unequip</button>`
+            : `<button class="btn btn-green" onclick="equipItem(${item.id})">⬇ Equip</button>`}
+        </div>` : ''}
+      ${isUsable ? `
+        <div class="detail-action-row">
+          <button class="btn btn-primary" onclick="useItem(${item.id})">✦ Use Item</button>
+        </div>` : ''}
+      <div class="detail-action-row">
+        <div class="qty-control">
+          <button class="qty-btn" onclick="changeSellQty(-1)">−</button>
+          <span class="qty-val" id="sell-qty-val">${sellQty}</span>
+          <button class="qty-btn" onclick="changeSellQty(+1)">+</button>
+        </div>
+        <button class="btn btn-ghost" style="flex:1" onclick="showSellModal(${item.id})">
+          Sell · $${(item.sellPrice * sellQty).toLocaleString()}
+        </button>
+      </div>
+      <div class="detail-action-row">
+        <button class="btn btn-ghost" style="flex:1;font-size:10px" onclick="showListModal(${item.id})">📈 List on Market</button>
+      </div>
+    </div>`;
+}
+
+// ─── ACTIONS ──────────────────────────────────────────────────
+function equipItem(id) {
+  const item = items.find(i => i.id === id);
+  const slot = item.type === 'weapon' ? 'weapon' : 'armor';
+  // Unequip previous
+  if (equippedSlots[slot]) {
+    equippedSlots[slot].equipped = false;
+    equippedSlots[slot].slot = undefined;
+  }
+  item.equipped = true;
+  item.slot = slot;
+  equippedSlots[slot] = item;
+  renderEquippedSlots();
+  renderGrid();
+  renderDetail();
+  toast('success', `⚡ ${item.name} equipped`);
+}
+
+function unequipItem(id) {
+  const item = items.find(i => i.id === id);
+  item.equipped = false;
+  const slot = item.slot;
+  item.slot = undefined;
+  equippedSlots[slot] = null;
+  renderEquippedSlots();
+  renderGrid();
+  renderDetail();
+  toast('info', `${item.name} unequipped`);
+}
+
+function useItem(id) {
+  const item = items.find(i => i.id === id);
+  const msgs = {
+    drug: `Used ${item.name}. Effects active!`,
+    consumable: `Used ${item.name}. Effect applied.`
+  };
+  item.qty--;
+  if (item.qty <= 0) {
+    items = items.filter(i => i.id !== id);
+    selectedId = null;
+    renderDetail();
+  }
+  renderGrid();
+  toast('success', `✦ ${msgs[item.type] || 'Item used.'}`);
+}
+
+function changeSellQty(delta) {
+  const item = items.find(i => i.id === selectedId);
+  if (!item) return;
+  sellQty = Math.max(1, Math.min(item.qty, sellQty + delta));
+  document.getElementById('sell-qty-val').textContent = sellQty;
+  // update sell button text
+  renderDetail();
+}
+
+function showSellModal(id) {
+  const item = items.find(i => i.id === id);
+  const total = item.sellPrice * sellQty;
+  document.getElementById('modal-title').textContent = 'SELL ITEMS';
+  document.getElementById('modal-body').innerHTML = `
+    Sell <strong style="color:var(--text)">×${sellQty} ${item.name}</strong> for
+    <strong style="color:var(--gold)">$${total.toLocaleString()}</strong>?<br><br>
+    <span style="color:var(--muted);font-family:var(--mono);font-size:10px">$${item.sellPrice.toLocaleString()} each · ${item.qty} in inventory</span>`;
+  document.getElementById('modal-ftr').innerHTML = `
+    <button class="btn btn-ghost" onclick="hideOverlay()">Cancel</button>
+    <button class="btn btn-primary" onclick="confirmSell(${id})">Confirm Sell</button>`;
+  document.getElementById('overlay').classList.add('show');
+}
+
+function confirmSell(id) {
+  const item = items.find(i => i.id === id);
+  const total = item.sellPrice * sellQty;
+  cash += total;
+  document.getElementById('cash-display').textContent = '$' + cash.toLocaleString();
+  item.qty -= sellQty;
+  if (item.qty <= 0) {
+    if (item.equipped) unequipItem(id);
+    items = items.filter(i => i.id !== id);
+    selectedId = null;
+    renderDetail();
+  }
+  sellQty = 1;
+  renderGrid();
+  hideOverlay();
+  toast('success', `💰 Sold for $${total.toLocaleString()}`);
+}
+
+function showListModal(id) {
+  const item = items.find(i => i.id === id);
+  document.getElementById('modal-title').textContent = 'LIST ON MARKET';
+  document.getElementById('modal-body').innerHTML = `
+    List <strong style="color:var(--text)">${item.name}</strong> on the player marketplace.<br><br>
+    <div style="margin-top:10px">
+      <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:6px">SET YOUR PRICE</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span style="color:var(--gold);font-family:var(--mono)">$</span>
+        <input id="list-price" type="number" value="${Math.round(item.sellPrice * 1.4)}"
+          style="background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:6px 10px;color:var(--text);font-family:var(--mono);font-size:13px;outline:none;width:120px">
+        <span style="font-family:var(--mono);font-size:10px;color:var(--text-dim)">Market avg: $${Math.round(item.sellPrice * 1.35).toLocaleString()}</span>
+      </div>
+    </div>`;
+  document.getElementById('modal-ftr').innerHTML = `
+    <button class="btn btn-ghost" onclick="hideOverlay()">Cancel</button>
+    <button class="btn btn-primary" onclick="confirmList(${id})">List Item</button>`;
+  document.getElementById('overlay').classList.add('show');
+}
+
+function confirmList(id) {
+  const item = items.find(i => i.id === id);
+  const price = parseInt(document.getElementById('list-price').value) || item.sellPrice;
+  hideOverlay();
+  toast('info', `📈 ${item.name} listed at $${price.toLocaleString()}`);
+}
+
+function showModal(type) {
+  if (type === 'unequip-all') {
+    document.getElementById('modal-title').textContent = 'UNEQUIP ALL';
+    document.getElementById('modal-body').innerHTML = 'Remove all equipped items and return them to your inventory?';
+    document.getElementById('modal-ftr').innerHTML = `
+      <button class="btn btn-ghost" onclick="hideOverlay()">Cancel</button>
+      <button class="btn btn-red" onclick="confirmUnequipAll()">Unequip All</button>`;
+    document.getElementById('overlay').classList.add('show');
+  }
+}
+
+function confirmUnequipAll() {
+  items.forEach(i => { i.equipped = false; i.slot = undefined; });
+  equippedSlots = { weapon: null, armor: null };
+  renderEquippedSlots(); renderGrid(); renderDetail();
+  hideOverlay();
+  toast('info', 'All items unequipped');
+}
+
+function goShop() { toast('info', '🛒 Redirecting to Shop...'); }
+
+// ─── FILTERS ──────────────────────────────────────────────────
+function setFilter(type, el) {
+  filterType = type;
+  document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderGrid();
+}
+
+function setRarity(rar, el) {
+  filterRarity = rar;
+  document.querySelectorAll('.rarity-dot').forEach(d => d.classList.remove('active'));
+  el.classList.add('active');
+  renderGrid();
+}
+
+// ─── OVERLAY ──────────────────────────────────────────────────
+function closeOverlay(e) { if (e.target === document.getElementById('overlay')) hideOverlay(); }
+function hideOverlay() { document.getElementById('overlay').classList.remove('show'); }
+
+// ─── TOAST ───────────────────────────────────────────────────
+function toast(type, msg) {
+  const area = document.getElementById('toast-area');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  const icon = type === 'success' ? '✓' : type === 'fail' ? '✗' : '⚡';
+  t.innerHTML = `<span style="color:${type==='success'?'var(--green)':type==='fail'?'var(--red)':'var(--gold)'}">${icon}</span> ${msg}`;
+  area.appendChild(t);
+  setTimeout(() => { t.style.opacity='0'; t.style.transition='opacity 0.3s'; setTimeout(()=>t.remove(),300); }, 2800);
+}
+
+// ─── INIT ─────────────────────────────────────────────────────
+renderEquippedSlots();
+renderGrid();
+</script>
+</body>
+</html>

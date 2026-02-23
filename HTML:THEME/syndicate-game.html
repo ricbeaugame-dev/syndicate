@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SYNDICATE — Underground MMORPG</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #0a0a0b;
+    --bg2:       #111114;
+    --bg3:       #18181d;
+    --border:    #2a2a35;
+    --border2:   #3a3a48;
+    --red:       #e03c3c;
+    --red-dim:   #7a1f1f;
+    --gold:      #c9a84c;
+    --gold-dim:  #6b5520;
+    --green:     #3cba6e;
+    --green-dim: #1a5c35;
+    --blue:      #4a90d9;
+    --blue-dim:  #1e3f6a;
+    --muted:     #55556a;
+    --text:      #d0d0e0;
+    --text-dim:  #7a7a90;
+    --mono:      'Share Tech Mono', monospace;
+    --heading:   'Bebas Neue', cursive;
+    --body:      'Inter', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--body);
+    font-size: 13px;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* SCANLINE OVERLAY */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.03) 2px,
+      rgba(0,0,0,0.03) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* TOP BAR */
+  .topbar {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    height: 48px;
+    gap: 24px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .logo {
+    font-family: var(--heading);
+    font-size: 26px;
+    letter-spacing: 4px;
+    color: var(--gold);
+    text-shadow: 0 0 20px rgba(201,168,76,0.4);
+    margin-right: 8px;
+    flex-shrink: 0;
+  }
+
+  .stat-pills {
+    display: flex;
+    gap: 8px;
+    flex: 1;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .stat-pills::-webkit-scrollbar { display: none; }
+
+  .pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 4px 10px;
+    white-space: nowrap;
+    font-family: var(--mono);
+    font-size: 11px;
+  }
+  .pill-label { color: var(--text-dim); font-size: 10px; text-transform: uppercase; letter-spacing: 1px; }
+  .pill-val { color: var(--text); font-weight: 600; }
+  .pill-bar {
+    width: 50px; height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .pill-fill { height: 100%; border-radius: 2px; transition: width 0.4s; }
+  .fill-energy { background: var(--blue); box-shadow: 0 0 6px var(--blue); }
+  .fill-nerve  { background: var(--red);  box-shadow: 0 0 6px var(--red); }
+  .fill-happy  { background: var(--gold); box-shadow: 0 0 6px var(--gold); }
+  .fill-hp     { background: var(--green);box-shadow: 0 0 6px var(--green); }
+
+  .topbar-cash {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--gold);
+    margin-left: auto;
+    flex-shrink: 0;
+    letter-spacing: 1px;
+  }
+  .topbar-user {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .avatar {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--red-dim), var(--gold-dim));
+    border: 1px solid var(--gold);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--heading);
+    font-size: 14px;
+    color: var(--gold);
+  }
+  .username { font-size: 12px; color: var(--text-dim); }
+
+  /* LAYOUT */
+  .layout {
+    display: flex;
+    min-height: calc(100vh - 48px);
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 180px;
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    padding: 12px 0;
+    flex-shrink: 0;
+    position: sticky;
+    top: 48px;
+    height: calc(100vh - 48px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  .nav-section {
+    margin-bottom: 8px;
+  }
+  .nav-label {
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 8px 16px 4px;
+    font-family: var(--mono);
+  }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: all 0.15s;
+    border-left: 2px solid transparent;
+    color: var(--text-dim);
+    font-size: 12px;
+    position: relative;
+  }
+  .nav-item:hover {
+    background: var(--bg3);
+    color: var(--text);
+    border-left-color: var(--border2);
+  }
+  .nav-item.active {
+    background: rgba(201,168,76,0.08);
+    color: var(--gold);
+    border-left-color: var(--gold);
+  }
+  .nav-icon { font-size: 14px; width: 16px; text-align: center; }
+  .nav-badge {
+    margin-left: auto;
+    background: var(--red);
+    color: white;
+    font-size: 9px;
+    padding: 1px 5px;
+    border-radius: 8px;
+    font-family: var(--mono);
+  }
+
+  /* MAIN */
+  .main {
+    flex: 1;
+    padding: 20px;
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 16px;
+    align-content: start;
+  }
+
+  /* CARDS */
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(255,255,255,0.02);
+  }
+  .card-title {
+    font-family: var(--heading);
+    font-size: 16px;
+    letter-spacing: 2px;
+    color: var(--text);
+  }
+  .card-body { padding: 14px; }
+
+  /* CRIMES PANEL */
+  .crimes-grid { display: flex; flex-direction: column; gap: 6px; }
+  .crime-row {
+    display: grid;
+    grid-template-columns: 1fr auto auto auto;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+  .crime-row::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--red);
+    transform: scaleY(0);
+    transition: transform 0.2s;
+  }
+  .crime-row:hover { border-color: var(--border2); background: rgba(255,255,255,0.03); }
+  .crime-row:hover::before { transform: scaleY(1); }
+  .crime-row.locked { opacity: 0.4; cursor: not-allowed; }
+
+  .crime-name { font-size: 13px; color: var(--text); font-weight: 500; }
+  .crime-meta { font-size: 10px; color: var(--text-dim); font-family: var(--mono); }
+  .crime-nerve {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--red);
+    background: rgba(224,60,60,0.1);
+    border: 1px solid var(--red-dim);
+    padding: 2px 7px;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+  .crime-chance {
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 2px 7px;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+  .chance-high   { color: var(--green); background: rgba(60,186,110,0.1); border: 1px solid var(--green-dim); }
+  .chance-medium { color: var(--gold);  background: rgba(201,168,76,0.1); border: 1px solid var(--gold-dim); }
+  .chance-low    { color: var(--red);   background: rgba(224,60,60,0.1);  border: 1px solid var(--red-dim); }
+  .crime-reward  { font-family: var(--mono); font-size: 11px; color: var(--gold); white-space: nowrap; }
+
+  /* COMMIT ANIMATION */
+  @keyframes flash-success {
+    0%   { background: rgba(60,186,110,0.3); }
+    100% { background: var(--bg3); }
+  }
+  @keyframes flash-fail {
+    0%   { background: rgba(224,60,60,0.3); }
+    100% { background: var(--bg3); }
+  }
+  .flash-success { animation: flash-success 0.6s ease; }
+  .flash-fail    { animation: flash-fail 0.6s ease; }
+
+  /* RESULT BANNER */
+  .result-banner {
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-family: var(--mono);
+    font-size: 11px;
+    margin-bottom: 10px;
+    display: none;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid;
+  }
+  .result-banner.show { display: flex; }
+  .result-banner.success { background: rgba(60,186,110,0.1); border-color: var(--green-dim); color: var(--green); }
+  .result-banner.fail    { background: rgba(224,60,60,0.1);  border-color: var(--red-dim);   color: var(--red); }
+
+  /* RIGHT COLUMN */
+  .right-col { display: flex; flex-direction: column; gap: 16px; }
+
+  /* PLAYER CARD */
+  .player-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .player-banner {
+    height: 60px;
+    background: linear-gradient(135deg, #1a0a0a 0%, #0a0a1a 50%, #1a1200 100%);
+    position: relative;
+    overflow: hidden;
+  }
+  .player-banner::after {
+    content: 'SYNDICATE';
+    position: absolute;
+    font-family: var(--heading);
+    font-size: 48px;
+    letter-spacing: 8px;
+    color: rgba(255,255,255,0.04);
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    white-space: nowrap;
+  }
+  .player-info { padding: 14px; }
+  .player-name-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .player-avatar-lg {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #3a0a0a, #2a1a00);
+    border: 2px solid var(--gold);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--heading);
+    font-size: 20px;
+    color: var(--gold);
+    flex-shrink: 0;
+  }
+  .player-name { font-family: var(--heading); font-size: 20px; letter-spacing: 2px; color: var(--text); }
+  .player-level { font-family: var(--mono); font-size: 10px; color: var(--gold); }
+  .player-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--green);
+    background: rgba(60,186,110,0.1);
+    border: 1px solid var(--green-dim);
+    padding: 2px 8px;
+    border-radius: 10px;
+  }
+  .status-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+  .stat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    margin-top: 10px;
+  }
+  .stat-box {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 8px 10px;
+  }
+  .stat-box-label { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2px; }
+  .stat-box-val { font-family: var(--mono); font-size: 16px; color: var(--text); }
+  .stat-box-val.gold { color: var(--gold); }
+  .stat-box-val.green { color: var(--green); }
+  .stat-box-val.red { color: var(--red); }
+
+  /* XP BAR */
+  .xp-row { margin-top: 10px; }
+  .xp-label { display: flex; justify-content: space-between; font-size: 9px; color: var(--muted); margin-bottom: 4px; font-family: var(--mono); }
+  .xp-track { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .xp-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--gold-dim), var(--gold));
+    border-radius: 3px;
+    width: 67%;
+    box-shadow: 0 0 8px rgba(201,168,76,0.4);
+  }
+
+  /* ACTIVITY LOG */
+  .log-list { display: flex; flex-direction: column; gap: 1px; }
+  .log-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 7px 14px;
+    font-size: 11px;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    animation: slide-in 0.3s ease;
+  }
+  @keyframes slide-in {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .log-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; margin-top: 3px; }
+  .log-dot.crime  { background: var(--red); }
+  .log-dot.cash   { background: var(--gold); }
+  .log-dot.combat { background: var(--blue); }
+  .log-dot.system { background: var(--muted); }
+  .log-text { color: var(--text-dim); line-height: 1.4; }
+  .log-text strong { color: var(--text); }
+  .log-time { margin-left: auto; color: var(--muted); font-family: var(--mono); font-size: 9px; white-space: nowrap; }
+
+  /* GLOBAL CHAT */
+  .chat-box { display: flex; flex-direction: column; height: 200px; }
+  .chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+  .chat-msg { font-size: 11px; line-height: 1.5; }
+  .chat-name { color: var(--gold); font-weight: 600; cursor: pointer; }
+  .chat-name:hover { text-decoration: underline; }
+  .chat-content { color: var(--text-dim); }
+  .chat-input-row {
+    display: flex;
+    gap: 6px;
+    padding: 8px;
+    border-top: 1px solid var(--border);
+  }
+  .chat-input {
+    flex: 1;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 5px 9px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 11px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .chat-input:focus { border-color: var(--border2); }
+  .chat-send {
+    background: var(--gold-dim);
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    padding: 5px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: var(--mono);
+    font-size: 11px;
+    transition: all 0.15s;
+  }
+  .chat-send:hover { background: var(--gold); color: var(--bg); }
+
+  /* NERVE MODAL */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.8);
+    backdrop-filter: blur(4px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    width: 380px;
+    overflow: hidden;
+    animation: modal-in 0.2s ease;
+  }
+  @keyframes modal-in {
+    from { opacity: 0; transform: scale(0.95) translateY(10px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  .modal-header {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .modal-title { font-family: var(--heading); font-size: 20px; letter-spacing: 2px; }
+  .modal-close { cursor: pointer; color: var(--muted); font-size: 18px; }
+  .modal-close:hover { color: var(--text); }
+  .modal-body { padding: 18px; }
+
+  .committing {
+    text-align: center;
+    padding: 20px;
+  }
+  .spinner {
+    width: 36px; height: 36px;
+    border: 2px solid var(--border);
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 12px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .commit-text { font-family: var(--mono); font-size: 12px; color: var(--text-dim); }
+
+  .result-box {
+    text-align: center;
+    padding: 10px;
+  }
+  .result-icon { font-size: 40px; margin-bottom: 10px; }
+  .result-title { font-family: var(--heading); font-size: 28px; letter-spacing: 3px; margin-bottom: 6px; }
+  .result-title.success { color: var(--green); }
+  .result-title.fail    { color: var(--red); }
+  .result-details { font-family: var(--mono); font-size: 11px; color: var(--text-dim); line-height: 1.8; }
+  .result-details .hl { color: var(--gold); }
+  .result-details .hl-red { color: var(--red); }
+  .modal-footer {
+    padding: 12px 18px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+  .btn {
+    padding: 7px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: var(--mono);
+    font-size: 11px;
+    border: 1px solid;
+    transition: all 0.15s;
+  }
+  .btn-ghost { background: transparent; border-color: var(--border); color: var(--text-dim); }
+  .btn-ghost:hover { border-color: var(--border2); color: var(--text); }
+  .btn-primary { background: var(--gold-dim); border-color: var(--gold); color: var(--gold); }
+  .btn-primary:hover { background: var(--gold); color: var(--bg); }
+
+  /* NOTIFICATION TOAST */
+  .toast-container { position: fixed; top: 60px; right: 16px; display: flex; flex-direction: column; gap: 8px; z-index: 2000; }
+  .toast {
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-size: 12px;
+    min-width: 220px;
+    max-width: 300px;
+    animation: toast-in 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  @keyframes toast-in {
+    from { opacity: 0; transform: translateX(20px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  .toast.success { border-left: 3px solid var(--green); }
+  .toast.fail    { border-left: 3px solid var(--red); }
+  .toast.info    { border-left: 3px solid var(--blue); }
+  .toast-icon { font-size: 16px; }
+  .toast-msg { color: var(--text); font-family: var(--mono); font-size: 11px; line-height: 1.4; }
+
+  /* SECTION TABS */
+  .tabs { display: flex; gap: 0; margin-bottom: 14px; border: 1px solid var(--border); border-radius: 4px; overflow: hidden; }
+  .tab {
+    flex: 1;
+    padding: 7px;
+    text-align: center;
+    cursor: pointer;
+    font-size: 11px;
+    font-family: var(--mono);
+    color: var(--text-dim);
+    background: var(--bg3);
+    border-right: 1px solid var(--border);
+    transition: all 0.15s;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .tab:last-child { border-right: none; }
+  .tab:hover { background: var(--bg2); color: var(--text); }
+  .tab.active { background: rgba(201,168,76,0.1); color: var(--gold); }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .col-span { grid-column: 1 / -1; }
+
+  /* ONLINE COUNT */
+  .online-pill {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-left: 8px;
+  }
+  .online-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="logo">SYNDICATE</div>
+  <div class="online-pill"><span class="online-dot"></span> 1,247 online</div>
+  <div class="stat-pills">
+    <div class="pill">
+      <span class="pill-label">⚡ NRG</span>
+      <div class="pill-bar"><div class="pill-fill fill-energy" id="energy-bar" style="width:74%"></div></div>
+      <span class="pill-val" id="energy-val">74/100</span>
+    </div>
+    <div class="pill">
+      <span class="pill-label">🔥 NERVE</span>
+      <div class="pill-bar"><div class="pill-fill fill-nerve" id="nerve-bar" style="width:62%"></div></div>
+      <span class="pill-val" id="nerve-val">31/50</span>
+    </div>
+    <div class="pill">
+      <span class="pill-label">😊 HAPPY</span>
+      <div class="pill-bar"><div class="pill-fill fill-happy" id="happy-bar" style="width:88%"></div></div>
+      <span class="pill-val" id="happy-val">88/100</span>
+    </div>
+    <div class="pill">
+      <span class="pill-label">❤️ HP</span>
+      <div class="pill-bar"><div class="pill-fill fill-hp" id="hp-bar" style="width:100%"></div></div>
+      <span class="pill-val" id="hp-val">100/100</span>
+    </div>
+  </div>
+  <div class="topbar-cash" id="cash-display">$24,850</div>
+  <div class="topbar-user">
+    <div class="avatar">G</div>
+    <span class="username">Ghost_Remy</span>
+  </div>
+</div>
+
+<!-- LAYOUT -->
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="nav-section">
+      <div class="nav-label">Character</div>
+      <div class="nav-item" onclick="switchSection('profile')"><span class="nav-icon">👤</span> Profile</div>
+      <div class="nav-item" onclick="switchSection('inventory')"><span class="nav-icon">🎒</span> Inventory</div>
+      <div class="nav-item" onclick="switchSection('education')"><span class="nav-icon">📚</span> Education</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Actions</div>
+      <div class="nav-item active" onclick="switchSection('crimes')"><span class="nav-icon">🗡</span> Crimes</div>
+      <div class="nav-item" onclick="switchSection('attack')"><span class="nav-icon">⚔️</span> Attack</div>
+      <div class="nav-item" onclick="switchSection('travel')"><span class="nav-icon">✈️</span> Travel</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Economy</div>
+      <div class="nav-item" onclick="switchSection('shop')"><span class="nav-icon">🛒</span> Shop</div>
+      <div class="nav-item" onclick="switchSection('market')"><span class="nav-icon">📈</span> Market</div>
+      <div class="nav-item" onclick="switchSection('casino')"><span class="nav-icon">🎲</span> Casino</div>
+      <div class="nav-item" onclick="switchSection('bank')"><span class="nav-icon">🏦</span> Bank</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Social</div>
+      <div class="nav-item" onclick="switchSection('faction')"><span class="nav-icon">🏴</span> Faction</div>
+      <div class="nav-item" onclick="switchSection('mail')">
+        <span class="nav-icon">✉️</span> Mail
+        <span class="nav-badge">3</span>
+      </div>
+      <div class="nav-item" onclick="switchSection('forums')"><span class="nav-icon">💬</span> Forums</div>
+      <div class="nav-item" onclick="switchSection('rankings')"><span class="nav-icon">🏆</span> Rankings</div>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+
+    <!-- LEFT COLUMN: CRIMES -->
+    <div>
+      <div class="tabs">
+        <div class="tab active">Crimes</div>
+        <div class="tab">Jail</div>
+        <div class="tab">Hospital</div>
+        <div class="tab">Activity Log</div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">COMMIT A CRIME</span>
+          <span style="font-family:var(--mono);font-size:10px;color:var(--text-dim)">NERVE: <span style="color:var(--red)" id="nerve-hdr">31</span>/50</span>
+        </div>
+        <div class="card-body">
+          <div id="result-banner" class="result-banner"></div>
+          <div class="crimes-grid" id="crimes-grid">
+            <!-- crimes injected by JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- ACTIVITY LOG -->
+      <div class="card" style="margin-top:16px">
+        <div class="card-header">
+          <span class="card-title">RECENT ACTIVITY</span>
+        </div>
+        <div class="log-list" id="activity-log">
+          <div class="log-item"><span class="log-dot crime"></span><span class="log-text"><strong>Pickpocketing</strong> — success. Earned <strong style="color:var(--gold)">$320</strong> + 12 XP</span><span class="log-time">2m ago</span></div>
+          <div class="log-item"><span class="log-dot combat"></span><span class="log-text">Attacked by <strong>Viper_K</strong> — you won! Stole <strong style="color:var(--gold)">$1,200</strong></span><span class="log-time">14m ago</span></div>
+          <div class="log-item"><span class="log-dot cash"></span><span class="log-text">Received <strong style="color:var(--gold)">$850</strong> hourly income from <strong>Safehouse</strong></span><span class="log-time">1h ago</span></div>
+          <div class="log-item"><span class="log-dot crime"></span><span class="log-text"><strong>Shoplifting</strong> — caught! Jailed for <strong style="color:var(--red)">2 minutes</strong></span><span class="log-time">2h ago</span></div>
+          <div class="log-item"><span class="log-dot system"></span><span class="log-text">Reached <strong>Level 12</strong> 🎉</span><span class="log-time">5h ago</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN -->
+    <div class="right-col">
+
+      <!-- PLAYER CARD -->
+      <div class="player-card">
+        <div class="player-banner"></div>
+        <div class="player-info">
+          <div class="player-name-row">
+            <div class="player-avatar-lg">G</div>
+            <div>
+              <div class="player-name">Ghost_Remy</div>
+              <div class="player-level">Level 12 · New York</div>
+            </div>
+            <div style="margin-left:auto">
+              <div class="player-status"><span class="status-dot"></span> Okay</div>
+            </div>
+          </div>
+          <div class="xp-row">
+            <div class="xp-label"><span>XP Progress</span><span>6,720 / 10,000</span></div>
+            <div class="xp-track"><div class="xp-fill"></div></div>
+          </div>
+          <div class="stat-grid">
+            <div class="stat-box"><div class="stat-box-label">Strength</div><div class="stat-box-val">142</div></div>
+            <div class="stat-box"><div class="stat-box-label">Defense</div><div class="stat-box-val">118</div></div>
+            <div class="stat-box"><div class="stat-box-label">Speed</div><div class="stat-box-val">97</div></div>
+            <div class="stat-box"><div class="stat-box-label">Intelligence</div><div class="stat-box-val">203</div></div>
+            <div class="stat-box"><div class="stat-box-label">Kills</div><div class="stat-box-val red">8</div></div>
+            <div class="stat-box"><div class="stat-box-label">Bank</div><div class="stat-box-val gold">$142k</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- GLOBAL CHAT -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">GLOBAL CHAT</span>
+          <span class="online-pill"><span class="online-dot"></span>1,247</span>
+        </div>
+        <div class="chat-box">
+          <div class="chat-messages" id="chat-messages">
+            <div class="chat-msg"><span class="chat-name">ShadowKing</span>: <span class="chat-content">anyone wanna do a faction war?</span></div>
+            <div class="chat-msg"><span class="chat-name">Viper_K</span>: <span class="chat-content">just hit level 20 lets goooo</span></div>
+            <div class="chat-msg"><span class="chat-name">CrimsonFox</span>: <span class="chat-content">the grand theft reward is insane rn</span></div>
+            <div class="chat-msg"><span class="chat-name">NightRaven</span>: <span class="chat-content">who keeps attacking newbies in Brooklyn lol</span></div>
+            <div class="chat-msg"><span class="chat-name">Ghost_Remy</span>: <span class="chat-content" style="color:var(--text)">just committed pickpocket, easy money</span></div>
+          </div>
+          <div class="chat-input-row">
+            <input class="chat-input" id="chat-input" placeholder="Message..." maxlength="200">
+            <button class="chat-send" onclick="sendChat()">SEND</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- CRIME MODAL -->
+<div class="modal-overlay" id="modal" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-title">PICKPOCKETING</span>
+      <span class="modal-close" onclick="hideModal()">✕</span>
+    </div>
+    <div class="modal-body" id="modal-body">
+      <div class="committing">
+        <div class="spinner"></div>
+        <div class="commit-text" id="commit-text">Committing crime...</div>
+      </div>
+    </div>
+    <div class="modal-footer" id="modal-footer" style="display:none">
+      <button class="btn btn-ghost" onclick="hideModal()">Close</button>
+      <button class="btn btn-primary" onclick="hideModal()">Commit Again</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOASTS -->
+<div class="toast-container" id="toast-container"></div>
+
+<script>
+// ─── GAME STATE ───────────────────────────────────────────────
+const state = {
+  energy: 74, maxEnergy: 100,
+  nerve:  31, maxNerve:  50,
+  happy:  88, maxHappy:  100,
+  hp:    100, maxHp:     100,
+  cash:  24850,
+};
+
+// ─── CRIMES DATA ──────────────────────────────────────────────
+const crimes = [
+  { id:1, name:'Pickpocketing',    desc:'Lift a wallet from an unsuspecting mark.', tier:1, nerve:3,  success:0.92, minReward:150,  maxReward:400,  xp:12, jailMins:1 },
+  { id:2, name:'Shoplifting',      desc:'Pocket small goods from local stores.',    tier:1, nerve:4,  success:0.84, minReward:200,  maxReward:600,  xp:18, jailMins:2 },
+  { id:3, name:'Mugging',          desc:'Threaten a civilian for their valuables.', tier:2, nerve:8,  success:0.71, minReward:500,  maxReward:1200, xp:35, jailMins:5 },
+  { id:4, name:'Car Theft',        desc:'Steal and sell a vehicle on the black market.',tier:2, nerve:10, success:0.64, minReward:800, maxReward:2400, xp:55, jailMins:8 },
+  { id:5, name:'Grand Theft',      desc:'Hit a high-value target. Big risk, big reward.',tier:3, nerve:18, success:0.48, minReward:2000, maxReward:6000,xp:120, jailMins:20 },
+  { id:6, name:'Bank Fraud',       desc:'Siphon funds through shell accounts.',    tier:4, nerve:25, success:0.35, minReward:5000, maxReward:15000,xp:250, jailMins:45, minLevel:8 },
+  { id:7, name:'Assassination',    desc:'Eliminate a high-profile target for hire.',tier:5, nerve:40, success:0.22, minReward:12000,maxReward:40000,xp:500, jailMins:120, minLevel:15 },
+];
+
+function getChanceClass(s) {
+  if (s >= 0.75) return 'chance-high';
+  if (s >= 0.5)  return 'chance-medium';
+  return 'chance-low';
+}
+function getChanceLabel(s) {
+  if (s >= 0.75) return Math.round(s*100) + '% ✓';
+  if (s >= 0.5)  return Math.round(s*100) + '% ◑';
+  return Math.round(s*100) + '% ✗';
+}
+function fmtCash(n) {
+  if (n >= 1000) return '$' + (n/1000).toFixed(0) + 'k';
+  return '$' + n;
+}
+
+function renderCrimes() {
+  const grid = document.getElementById('crimes-grid');
+  grid.innerHTML = '';
+  crimes.forEach(c => {
+    const canAfford = state.nerve >= c.nerve;
+    const locked    = (c.minLevel || 0) > 12; // player is level 12
+    const row = document.createElement('div');
+    row.className = 'crime-row' + (locked ? ' locked' : '');
+    row.id = 'crime-' + c.id;
+    row.innerHTML = `
+      <div>
+        <div class="crime-name">${c.name}</div>
+        <div class="crime-meta">${c.desc}</div>
+      </div>
+      <div class="crime-nerve" style="${!canAfford?'opacity:0.4':''}">⚡ ${c.nerve} NRV</div>
+      <div class="crime-chance ${getChanceClass(c.success)}">${getChanceLabel(c.success)}</div>
+      <div class="crime-reward">${fmtCash(c.minReward)}–${fmtCash(c.maxReward)}</div>
+    `;
+    if (!locked && canAfford) {
+      row.onclick = () => commitCrime(c);
+    } else if (!canAfford && !locked) {
+      row.title = `Need ${c.nerve} nerve (you have ${state.nerve})`;
+    }
+    grid.appendChild(row);
+  });
+}
+
+// ─── COMMIT CRIME ─────────────────────────────────────────────
+let committing = false;
+function commitCrime(crime) {
+  if (committing || state.nerve < crime.nerve) return;
+  committing = true;
+
+  // Show modal loading
+  document.getElementById('modal-title').textContent = crime.name.toUpperCase();
+  document.getElementById('modal-body').innerHTML = `
+    <div class="committing">
+      <div class="spinner"></div>
+      <div class="commit-text" id="commit-text">Casing the target...</div>
+    </div>`;
+  document.getElementById('modal-footer').style.display = 'none';
+  document.getElementById('modal').classList.add('show');
+
+  const texts = ['Casing the target...', 'Making your move...', 'Almost there...'];
+  let t = 0;
+  const interval = setInterval(() => {
+    t++;
+    if (t < texts.length) {
+      const el = document.getElementById('commit-text');
+      if (el) el.textContent = texts[t];
+    }
+  }, 500);
+
+  setTimeout(() => {
+    clearInterval(interval);
+    const success = Math.random() < crime.success;
+    const cash    = Math.floor(Math.random() * (crime.maxReward - crime.minReward) + crime.minReward);
+    const xp      = crime.xp + Math.floor(Math.random() * 10);
+
+    // Deduct nerve
+    state.nerve = Math.max(0, state.nerve - crime.nerve);
+    updateStatBars();
+
+    if (success) {
+      state.cash += cash;
+      updateCash();
+      document.getElementById('modal-body').innerHTML = `
+        <div class="result-box">
+          <div class="result-icon">💰</div>
+          <div class="result-title success">SUCCESS</div>
+          <div class="result-details">
+            Pulled off <strong>${crime.name}</strong> without a hitch.<br><br>
+            Cash earned: <span class="hl">+$${cash.toLocaleString()}</span><br>
+            XP gained:   <span class="hl">+${xp} XP</span><br>
+            Nerve used:  <span class="hl-red">-${crime.nerve}</span>
+          </div>
+        </div>`;
+      addLog('crime', `<strong>${crime.name}</strong> — success. Earned <strong style="color:var(--gold)">$${cash.toLocaleString()}</strong> + ${xp} XP`);
+      showToast('success', '💰', `+$${cash.toLocaleString()} · +${xp} XP`);
+    } else {
+      const jailSecs = crime.jailMins * 60;
+      document.getElementById('modal-body').innerHTML = `
+        <div class="result-box">
+          <div class="result-icon">🚔</div>
+          <div class="result-title fail">CAUGHT</div>
+          <div class="result-details">
+            Authorities caught you in the act.<br><br>
+            Jailed for: <span class="hl-red">${crime.jailMins} minute${crime.jailMins>1?'s':''}</span><br>
+            Nerve used: <span class="hl-red">-${crime.nerve}</span>
+          </div>
+        </div>`;
+      addLog('crime', `<strong>${crime.name}</strong> — caught! Jailed for <strong style="color:var(--red)">${crime.jailMins} min${crime.jailMins>1?'s':''}</strong>`);
+      showToast('fail', '🚔', `Caught! Jailed ${crime.jailMins}m`);
+    }
+
+    document.getElementById('modal-footer').style.display = 'flex';
+    committing = false;
+    renderCrimes();
+  }, 1600);
+}
+
+// ─── UI HELPERS ───────────────────────────────────────────────
+function updateStatBars() {
+  const bars = [
+    ['energy', 'energy'], ['nerve', 'nerve'], ['happy', 'happy'], ['hp', 'hp']
+  ];
+  bars.forEach(([key, id]) => {
+    const pct = (state[key] / state['max' + key.charAt(0).toUpperCase() + key.slice(1)]) * 100;
+    document.getElementById(id + '-bar').style.width = pct + '%';
+    document.getElementById(id + '-val').textContent = `${state[key]}/${state['max' + key.charAt(0).toUpperCase() + key.slice(1)]}`;
+  });
+  document.getElementById('nerve-hdr').textContent = state.nerve;
+}
+
+function updateCash() {
+  document.getElementById('cash-display').textContent = '$' + state.cash.toLocaleString();
+}
+
+function addLog(type, html) {
+  const log = document.getElementById('activity-log');
+  const item = document.createElement('div');
+  item.className = 'log-item';
+  item.innerHTML = `<span class="log-dot ${type}"></span><span class="log-text">${html}</span><span class="log-time">just now</span>`;
+  log.prepend(item);
+  while (log.children.length > 8) log.removeChild(log.lastChild);
+}
+
+function showToast(type, icon, msg) {
+  const c = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.innerHTML = `<span class="toast-icon">${icon}</span><span class="toast-msg">${msg}</span>`;
+  c.appendChild(t);
+  setTimeout(() => { t.style.opacity='0'; t.style.transition='opacity 0.4s'; setTimeout(()=>t.remove(), 400); }, 3000);
+}
+
+function closeModal(e) { if (e.target === document.getElementById('modal')) hideModal(); }
+function hideModal() {
+  document.getElementById('modal').classList.remove('show');
+  committing = false;
+}
+
+function sendChat() {
+  const input = document.getElementById('chat-input');
+  const msg = input.value.trim();
+  if (!msg) return;
+  const msgs = document.getElementById('chat-messages');
+  const el = document.createElement('div');
+  el.className = 'chat-msg';
+  el.innerHTML = `<span class="chat-name">Ghost_Remy</span>: <span class="chat-content" style="color:var(--text)">${msg}</span>`;
+  msgs.appendChild(el);
+  msgs.scrollTop = msgs.scrollHeight;
+  input.value = '';
+}
+
+document.getElementById('chat-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') sendChat();
+});
+
+function switchSection(s) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+}
+
+// ─── REGEN SIMULATION ─────────────────────────────────────────
+setInterval(() => {
+  if (state.energy < state.maxEnergy) { state.energy = Math.min(state.maxEnergy, state.energy + 1); }
+  if (state.nerve  < state.maxNerve)  { state.nerve  = Math.min(state.maxNerve,  state.nerve  + 1); updateStatBars(); renderCrimes(); return; }
+  updateStatBars();
+}, 8000); // faster for demo
+
+// ─── SIMULATED CHAT ───────────────────────────────────────────
+const chatNames  = ['ShadowKing','Viper_K','CrimsonFox','NightRaven','IronFist','DarkMatter'];
+const chatMsgs   = [
+  'just robbed the bank lmaooo','anyone selling M4?','faction war tonight 9pm EST',
+  'level 25 hits different','this nerve regen is painfully slow','who got busted in Tokyo lol',
+  'looking for faction, top 100 player','grand theft paying 8k rn, go go go',
+];
+setInterval(() => {
+  const msgs = document.getElementById('chat-messages');
+  const el = document.createElement('div');
+  el.className = 'chat-msg';
+  el.innerHTML = `<span class="chat-name">${chatNames[Math.floor(Math.random()*chatNames.length)]}</span>: <span class="chat-content">${chatMsgs[Math.floor(Math.random()*chatMsgs.length)]}</span>`;
+  msgs.appendChild(el);
+  msgs.scrollTop = msgs.scrollHeight;
+  while (msgs.children.length > 20) msgs.removeChild(msgs.firstChild);
+}, 5000);
+
+// ─── INIT ─────────────────────────────────────────────────────
+renderCrimes();
+updateStatBars();
+updateCash();
+
+// Welcome toast
+setTimeout(() => showToast('info', '🏙️', 'Welcome back, Ghost_Remy'), 800);
+setTimeout(() => showToast('info', '💼', 'Daily bonus ready to claim!'), 2000);
+</script>
+</body>
+</html>

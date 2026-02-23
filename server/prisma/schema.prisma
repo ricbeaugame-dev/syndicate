@@ -1,0 +1,282 @@
+// SYNDICATE MMORPG - Prisma Schema
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// AUTH & USER
+// ═══════════════════════════════════════════════════════════════
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  username  String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  character Character?
+}
+
+model Character {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name   String
+
+  // Stats
+  strength     Int @default(10)
+  defense      Int @default(10)
+  speed        Int @default(10)
+  dexterity    Int @default(10)
+  intelligence Int @default(10)
+
+  // Vital systems
+  energy     Int @default(100)
+  maxEnergy  Int @default(100)
+  nerve      Int @default(50)
+  maxNerve   Int @default(50)
+  happy      Int @default(100)
+  maxHappy   Int @default(100)
+  hp         Int @default(100)
+  maxHp      Int @default(100)
+
+  // Progression
+  xp        Int  @default(0)
+  level     Int  @default(1)
+  cash      Int  @default(0)
+  bank      Int  @default(0)
+
+  // Combat stats
+  kills     Int  @default(0)
+  deaths    Int  @default(0)
+  attacksWon  Int @default(0)
+  crimesCommitted Int @default(0)
+  crimesSuccess   Int @default(0)
+
+  // Status
+  status      String  @default("okay") // okay, jailed, hospital, traveling
+  jailedUntil DateTime?
+  hospitalUntil DateTime?
+  travelUntil DateTime?
+  currentCity String  @default("New York")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  inventoryItems InventoryItem[]
+  equippedWeaponId String?
+  equippedArmorId  String?
+  crimeLogs       CrimeLog[]
+  attackLogsAsAttacker AttackLog[] @relation("AttackerLogs")
+  attackLogsAsDefender AttackLog[] @relation("DefenderLogs")
+  factionMember   FactionMember?
+  messagesSent    Message[]       @relation("Sender")
+  messagesReceived Message[]      @relation("Receiver")
+  notifications   Notification[]
+  travelLogs      TravelLog[]
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ITEMS & INVENTORY
+// ═══════════════════════════════════════════════════════════════
+
+model Item {
+  id          String  @id @default(cuid())
+  name        String
+  type        String  // weapon, armor, drug, consumable, misc
+  rarity      String  // common, uncommon, rare, epic, legendary
+  description String?
+  icon        String?
+  buyPrice    Int?
+  sellPrice   Int
+  // Stats
+  atkBonus    Int?
+  defBonus    Int?
+  spdBonus    Int?
+  energyRestore Int?
+  hpRestore   Int?
+  happyRestore Int?
+  // Drug-specific
+  duration    String?
+  addictionRisk String?
+  minLevel    Int     @default(1)
+
+  inventoryItems InventoryItem[]
+}
+
+model InventoryItem {
+  id         String @id @default(cuid())
+  characterId String
+  character  Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  itemId     String
+  item       Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  quantity   Int      @default(1)
+
+  @@unique([characterId, itemId])
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CRIME
+// ═══════════════════════════════════════════════════════════════
+
+model Crime {
+  id         String  @id @default(cuid())
+  name       String  @unique
+  description String?
+  tier       Int
+  nerveCost  Int
+  successChance Float
+  minReward  Int
+  maxReward  Int
+  xpReward   Int
+  jailMinutes Int
+  minLevel   Int     @default(1)
+
+  crimeLogs CrimeLog[]
+}
+
+model CrimeLog {
+  id         String   @id @default(cuid())
+  characterId String
+  character   Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  crimeId     String
+  crime       Crime     @relation(fields: [crimeId], references: [id], onDelete: Cascade)
+  success     Boolean
+  cashEarned  Int       @default(0)
+  xpEarned    Int       @default(0)
+  jailed      Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+}
+
+// ═══════════════════════════════════════════════════════════════
+// COMBAT
+// ═══════════════════════════════════════════════════════════════
+
+model AttackLog {
+  id           String   @id @default(cuid())
+  attackerId   String
+  attacker     Character @relation("AttackerLogs", fields: [attackerId], references: [id], onDelete: Cascade)
+  defenderId   String
+  defender     Character @relation("DefenderLogs", fields: [defenderId], references: [id], onDelete: Cascade)
+  winnerId     String
+  cashStolen   Int       @default(0)
+  xpEarned     Int       @default(0)
+  isKill       Boolean   @default(false)
+  attackerWasDefender Boolean @default(false) // true if defender won
+  createdAt    DateTime  @default(now())
+}
+
+// ═══════════════════════════════════════════════════════════════
+// FACTIONS
+// ═══════════════════════════════════════════════════════════════
+
+model Faction {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  tag         String   @unique
+  emblem      String?
+  bank        Int      @default(0)
+  respect     Int      @default(0)
+  maxMembers  Int      @default(50)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  members FactionMember[]
+}
+
+model FactionMember {
+  id         String   @id @default(cuid())
+  characterId String
+  character  Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  factionId   String
+  faction    Faction   @relation(fields: [factionId], references: [id], onDelete: Cascade)
+  role       String   @default("member") // leader, officer, member
+  contribution Int    @default(0)
+  joinedAt   DateTime @default(now())
+
+  @@unique([characterId])
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MESSAGING & SOCIAL
+// ═══════════════════════════════════════════════════════════════
+
+model Message {
+  id        String   @id @default(cuid())
+  senderId   String
+  sender     Character @relation("Sender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiverId String
+  receiver   Character @relation("Receiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  subject   String?
+  content   String
+  read      Boolean   @default(false)
+  createdAt DateTime  @default(now())
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PROPERTIES (future expansion)
+// ═══════════════════════════════════════════════════════════════
+
+model Property {
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+  incomePerHour Int
+  buyPrice    Int
+  minLevel    Int     @default(1)
+}
+
+// ═══════════════════════════════════════════════════════════════
+// EDUCATION (future expansion)
+// ═══════════════════════════════════════════════════════════════
+
+model Education {
+  id          String  @id @default(cuid())
+  name        String
+  statBonus   String
+  bonusAmount Int
+  durationMinutes Int
+  minLevel    Int     @default(1)
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TRAVEL (future expansion)
+// ═══════════════════════════════════════════════════════════════
+
+model TravelLog {
+  id         String   @id @default(cuid())
+  characterId String
+  character  Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  fromCity   String
+  toCity     String
+  departedAt DateTime @default(now())
+  arrivedAt  DateTime
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CASINO (future expansion)
+// ═══════════════════════════════════════════════════════════════
+
+// Casino logs can be added later
+
+// ═══════════════════════════════════════════════════════════════
+// NOTIFICATIONS
+// ═══════════════════════════════════════════════════════════════
+
+model Notification {
+  id         String   @id @default(cuid())
+  characterId String
+  character  Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  type       String   // attack, jailed, mail, faction, etc.
+  title      String
+  content    String?
+  read       Boolean  @default(false)
+  createdAt  DateTime @default(now())
+}

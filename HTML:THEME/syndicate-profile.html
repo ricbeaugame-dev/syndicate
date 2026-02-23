@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SYNDICATE — Profile</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #0a0a0b;
+    --bg2:       #111114;
+    --bg3:       #18181d;
+    --border:    #2a2a35;
+    --border2:   #3a3a48;
+    --red:       #e03c3c;
+    --red-dim:   #7a1f1f;
+    --gold:      #c9a84c;
+    --gold-dim:  #6b5520;
+    --green:     #3cba6e;
+    --green-dim: #1a5c35;
+    --blue:      #4a90d9;
+    --blue-dim:  #1e3f6a;
+    --purple:    #9b6bd4;
+    --purple-dim:#3d2060;
+    --muted:     #55556a;
+    --text:      #d0d0e0;
+    --text-dim:  #7a7a90;
+    --mono:      'Share Tech Mono', monospace;
+    --heading:   'Bebas Neue', cursive;
+    --body:      'Inter', sans-serif;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--body);
+    font-size: 13px;
+    min-height: 100vh;
+  }
+
+  body::before {
+    content:'';
+    position:fixed; inset:0;
+    background: repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.03) 2px,rgba(0,0,0,0.03) 4px);
+    pointer-events:none; z-index:9999;
+  }
+
+  .topbar {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center;
+    padding: 0 16px; height: 48px; gap: 24px;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .logo { font-family:var(--heading); font-size:26px; letter-spacing:4px; color:var(--gold); text-shadow:0 0 20px rgba(201,168,76,0.4); flex-shrink:0; }
+  .stat-pills { display:flex; gap:8px; flex:1; overflow-x:auto; scrollbar-width:none; }
+  .pill { display:flex; align-items:center; gap:6px; background:var(--bg3); border:1px solid var(--border); border-radius:4px; padding:4px 10px; white-space:nowrap; font-family:var(--mono); font-size:11px; }
+  .pill-label { color:var(--text-dim); font-size:10px; text-transform:uppercase; letter-spacing:1px; }
+  .pill-bar { width:50px; height:4px; background:var(--border); border-radius:2px; overflow:hidden; }
+  .pill-fill { height:100%; border-radius:2px; }
+  .fill-energy { background:var(--blue); box-shadow:0 0 6px var(--blue); }
+  .fill-nerve  { background:var(--red);  box-shadow:0 0 6px var(--red); }
+  .fill-happy  { background:var(--gold); box-shadow:0 0 6px var(--gold); }
+  .fill-hp     { background:var(--green);box-shadow:0 0 6px var(--green); }
+  .topbar-cash { font-family:var(--mono); font-size:13px; color:var(--gold); margin-left:auto; flex-shrink:0; letter-spacing:1px; }
+  .topbar-user { display:flex; align-items:center; gap:8px; flex-shrink:0; }
+  .avatar { width:30px; height:30px; border-radius:50%; background:linear-gradient(135deg,var(--red-dim),var(--gold-dim)); border:1px solid var(--gold); display:flex; align-items:center; justify-content:center; font-family:var(--heading); font-size:14px; color:var(--gold); }
+
+  .layout { display:flex; min-height:calc(100vh - 48px); }
+
+  .sidebar { width:180px; background:var(--bg2); border-right:1px solid var(--border); padding:12px 0; flex-shrink:0; position:sticky; top:48px; height:calc(100vh - 48px); overflow-y:auto; }
+  .nav-section { margin-bottom:8px; }
+  .nav-label { font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); padding:8px 16px 4px; font-family:var(--mono); }
+  .nav-item { display:flex; align-items:center; gap:10px; padding:8px 16px; cursor:pointer; transition:all 0.15s; border-left:2px solid transparent; color:var(--text-dim); font-size:12px; }
+  .nav-item:hover { background:var(--bg3); color:var(--text); border-left-color:var(--border2); }
+  .nav-item.active { background:rgba(201,168,76,0.08); color:var(--gold); border-left-color:var(--gold); }
+  .nav-icon { font-size:14px; width:16px; text-align:center; }
+  .nav-badge { margin-left:auto; background:var(--red); color:white; font-size:9px; padding:1px 5px; border-radius:8px; font-family:var(--mono); }
+
+  .main { flex:1; padding:20px; }
+
+  /* HERO */
+  .profile-hero { position:relative; border-radius:8px; overflow:hidden; margin-bottom:16px; border:1px solid var(--border); }
+
+  .hero-banner {
+    height:160px;
+    background: linear-gradient(135deg, #0d0505 0%, #12080a 30%, #0a0a12 60%, #0c0c08 100%);
+    position:relative; overflow:hidden;
+  }
+  .hero-banner::before {
+    content:''; position:absolute; inset:0;
+    background:
+      radial-gradient(ellipse at 20% 50%, rgba(224,60,60,0.15) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 50%, rgba(201,168,76,0.12) 0%, transparent 60%);
+  }
+  .hero-banner::after {
+    content:'GHOST_REMY';
+    position:absolute; font-family:var(--heading); font-size:100px; letter-spacing:16px;
+    color:rgba(255,255,255,0.025); top:50%; left:50%; transform:translate(-50%,-50%); white-space:nowrap;
+  }
+  .hero-grid {
+    position:absolute; inset:0;
+    background-image: linear-gradient(rgba(201,168,76,0.04) 1px,transparent 1px), linear-gradient(90deg,rgba(201,168,76,0.04) 1px,transparent 1px);
+    background-size:40px 40px;
+  }
+  .hero-rank { position:absolute; top:16px; right:16px; font-family:var(--heading); font-size:13px; letter-spacing:2px; color:var(--gold); background:rgba(0,0,0,0.6); border:1px solid var(--gold-dim); padding:4px 12px; border-radius:4px; backdrop-filter:blur(4px); }
+  .hero-bottom { position:absolute; bottom:0; left:0; right:0; height:2px; background:linear-gradient(90deg,transparent,var(--gold),transparent); opacity:0.5; }
+
+  .hero-content { background:var(--bg2); padding:0 24px 20px; display:flex; align-items:flex-end; gap:20px; }
+
+  .hero-avatar {
+    width:88px; height:88px; border-radius:50%; border:3px solid var(--gold);
+    background:linear-gradient(135deg,#2a0808,#1a1200,#0a0818);
+    display:flex; align-items:center; justify-content:center;
+    font-family:var(--heading); font-size:42px; color:var(--gold);
+    margin-top:-44px; flex-shrink:0; position:relative;
+    box-shadow:0 0 30px rgba(201,168,76,0.3),inset 0 0 20px rgba(201,168,76,0.05);
+  }
+  .hero-avatar::after { content:''; position:absolute; inset:-5px; border-radius:50%; border:1px solid rgba(201,168,76,0.2); animation:avatar-pulse 3s ease-in-out infinite; }
+  @keyframes avatar-pulse { 0%,100%{transform:scale(1);opacity:0.6} 50%{transform:scale(1.05);opacity:0.2} }
+
+  .hero-meta { flex:1; padding-top:8px; }
+  .hero-name { font-family:var(--heading); font-size:36px; letter-spacing:4px; color:var(--text); line-height:1; margin-bottom:4px; }
+  .hero-sub { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+  .hero-level { font-family:var(--mono); font-size:12px; color:var(--gold); }
+  .hero-faction { font-family:var(--mono); font-size:11px; color:var(--purple); background:rgba(155,107,212,0.1); border:1px solid var(--purple-dim); padding:2px 8px; border-radius:3px; }
+  .hero-status { display:inline-flex; align-items:center; gap:4px; font-family:var(--mono); font-size:10px; color:var(--green); background:rgba(60,186,110,0.1); border:1px solid var(--green-dim); padding:2px 8px; border-radius:10px; }
+  .status-dot { width:5px; height:5px; border-radius:50%; background:var(--green); animation:pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  .hero-actions { display:flex; gap:8px; align-items:flex-end; padding-top:8px; }
+  .btn { padding:7px 16px; border-radius:4px; cursor:pointer; font-family:var(--mono); font-size:11px; border:1px solid; transition:all 0.15s; letter-spacing:1px; }
+  .btn-ghost { background:transparent; border-color:var(--border); color:var(--text-dim); }
+  .btn-ghost:hover { border-color:var(--border2); color:var(--text); }
+  .btn-red  { background:rgba(224,60,60,0.1); border-color:var(--red-dim); color:var(--red); }
+  .btn-red:hover { background:var(--red); color:white; }
+  .btn-gold { background:rgba(201,168,76,0.1); border-color:var(--gold-dim); color:var(--gold); }
+  .btn-gold:hover { background:var(--gold); color:var(--bg); }
+
+  /* XP */
+  .xp-section { background:var(--bg2); border:1px solid var(--border); border-radius:6px; padding:14px 18px; margin-bottom:16px; display:grid; grid-template-columns:1fr auto; align-items:center; gap:12px; }
+  .xp-label-row { display:flex; justify-content:space-between; margin-bottom:6px; font-family:var(--mono); font-size:10px; color:var(--text-dim); }
+  .xp-track { height:8px; background:var(--border); border-radius:4px; overflow:hidden; }
+  .xp-fill { height:100%; background:linear-gradient(90deg,var(--gold-dim),var(--gold)); border-radius:4px; width:67%; box-shadow:0 0 10px rgba(201,168,76,0.4); position:relative; overflow:hidden; }
+  .xp-fill::after { content:''; position:absolute; inset:0; background:linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent); animation:shimmer 2s infinite; }
+  @keyframes shimmer { 0%{transform:translateX(-100%)} 100%{transform:translateX(200%)} }
+  .xp-next { font-family:var(--mono); font-size:11px; color:var(--text-dim); text-align:right; white-space:nowrap; }
+  .xp-next strong { color:var(--gold); }
+
+  .profile-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; }
+  .span2 { grid-column:span 2; }
+  .span3 { grid-column:span 3; }
+
+  .card { background:var(--bg2); border:1px solid var(--border); border-radius:6px; overflow:hidden; animation:fade-up 0.3s ease both; }
+  @keyframes fade-up { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+  .card:nth-child(1){animation-delay:0.05s} .card:nth-child(2){animation-delay:0.10s}
+  .card:nth-child(3){animation-delay:0.15s} .card:nth-child(4){animation-delay:0.20s}
+  .card:nth-child(5){animation-delay:0.25s} .card:nth-child(6){animation-delay:0.30s}
+  .card:nth-child(7){animation-delay:0.35s}
+
+  .card-header { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border-bottom:1px solid var(--border); background:rgba(255,255,255,0.02); }
+  .card-title { font-family:var(--heading); font-size:15px; letter-spacing:2px; color:var(--text); }
+  .card-badge { font-family:var(--mono); font-size:9px; padding:2px 8px; border-radius:3px; letter-spacing:1px; text-transform:uppercase; }
+  .badge-gold   { background:rgba(201,168,76,0.1); border:1px solid var(--gold-dim); color:var(--gold); }
+  .badge-purple { background:rgba(155,107,212,0.1); border:1px solid var(--purple-dim); color:var(--purple); }
+  .badge-red    { background:rgba(224,60,60,0.1); border:1px solid var(--red-dim); color:var(--red); }
+  .badge-blue   { background:rgba(74,144,217,0.1); border:1px solid var(--blue-dim); color:var(--blue); }
+  .card-body { padding:14px; }
+
+  /* COMBAT STATS */
+  .combat-stat { display:flex; align-items:center; gap:12px; padding:9px 0; border-bottom:1px solid rgba(255,255,255,0.04); }
+  .combat-stat:last-child { border-bottom:none; }
+  .cs-icon { font-size:18px; width:24px; text-align:center; flex-shrink:0; }
+  .cs-info { flex:1; }
+  .cs-name { font-size:11px; color:var(--text-dim); margin-bottom:4px; text-transform:uppercase; letter-spacing:1px; }
+  .cs-bar-track { height:5px; background:var(--border); border-radius:3px; overflow:hidden; }
+  .cs-bar-fill { height:100%; border-radius:3px; width:0; transition:width 1s ease; }
+  .cs-val { font-family:var(--mono); font-size:14px; color:var(--text); font-weight:600; width:36px; text-align:right; flex-shrink:0; }
+
+  /* OVERVIEW */
+  .overview-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+  .ov-box { background:var(--bg3); border:1px solid var(--border); border-radius:5px; padding:12px; position:relative; overflow:hidden; }
+  .ov-box::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; }
+  .ov-kills::before  { background:var(--red); }
+  .ov-crimes::before { background:var(--gold); }
+  .ov-wealth::before { background:var(--green); }
+  .ov-attacks::before{ background:var(--blue); }
+  .ov-deaths::before { background:var(--muted); }
+  .ov-rank::before   { background:var(--purple); }
+  .ov-val { font-family:var(--heading); font-size:30px; letter-spacing:1px; color:var(--text); }
+  .ov-label { font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-top:2px; }
+  .ov-delta { font-family:var(--mono); font-size:9px; color:var(--green); margin-top:4px; }
+
+  /* MEDALS */
+  .medals-grid { display:flex; flex-wrap:wrap; gap:10px; }
+  .medal { display:flex; flex-direction:column; align-items:center; gap:4px; width:64px; cursor:pointer; position:relative; }
+  .medal-icon { width:52px; height:52px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:22px; border:2px solid; transition:all 0.2s; position:relative; }
+  .medal:hover .medal-icon { transform:scale(1.1); }
+  .medal-gold   .medal-icon { background:rgba(201,168,76,0.15); border-color:var(--gold);   box-shadow:0 0 12px rgba(201,168,76,0.3); }
+  .medal-silver .medal-icon { background:rgba(180,180,180,0.1); border-color:#888;          box-shadow:0 0 8px rgba(180,180,180,0.2); }
+  .medal-bronze .medal-icon { background:rgba(180,100,40,0.15); border-color:#b46428;       box-shadow:0 0 8px rgba(180,100,40,0.2); }
+  .medal-locked .medal-icon { background:rgba(255,255,255,0.03); border-color:var(--border); filter:grayscale(1); opacity:0.3; }
+  .medal-label  { font-family:var(--mono); font-size:8px; color:var(--text-dim); text-align:center; line-height:1.2; letter-spacing:0.5px; }
+  .medal-new { position:absolute; top:-2px; right:-2px; width:12px; height:12px; border-radius:50%; background:var(--red); border:1px solid var(--bg2); animation:pulse 1.5s infinite; }
+  .tooltip-text { visibility:hidden; opacity:0; background:var(--bg3); color:var(--text); border:1px solid var(--border2); font-family:var(--mono); font-size:10px; padding:5px 9px; border-radius:4px; position:absolute; bottom:calc(100% + 6px); left:50%; transform:translateX(-50%); white-space:nowrap; z-index:100; transition:opacity 0.15s; pointer-events:none; }
+  .medal:hover .tooltip-text { visibility:visible; opacity:1; }
+
+  /* ATTACK LOG */
+  .attack-log { display:flex; flex-direction:column; }
+  .attack-row { display:grid; grid-template-columns:24px 1fr auto auto; align-items:center; gap:10px; padding:9px 14px; border-bottom:1px solid rgba(255,255,255,0.03); font-size:11px; transition:background 0.1s; }
+  .attack-row:hover { background:rgba(255,255,255,0.02); }
+  .attack-row:last-child { border-bottom:none; }
+  .ar-icon { font-size:14px; text-align:center; }
+  .ar-desc { color:var(--text-dim); }
+  .ar-desc strong { color:var(--text); cursor:pointer; }
+  .ar-desc strong:hover { color:var(--gold); }
+  .ar-result { font-family:var(--mono); font-size:10px; padding:2px 7px; border-radius:3px; white-space:nowrap; }
+  .ar-win  { color:var(--green); background:rgba(60,186,110,0.1); border:1px solid var(--green-dim); }
+  .ar-loss { color:var(--red);   background:rgba(224,60,60,0.1);  border:1px solid var(--red-dim); }
+  .ar-time { font-family:var(--mono); font-size:9px; color:var(--muted); white-space:nowrap; }
+
+  /* EDUCATION */
+  .edu-item { padding:10px 14px; border-bottom:1px solid rgba(255,255,255,0.03); display:flex; align-items:center; gap:12px; }
+  .edu-item:last-child { border-bottom:none; }
+  .edu-icon { font-size:18px; width:28px; text-align:center; }
+  .edu-info { flex:1; }
+  .edu-name { font-size:12px; color:var(--text); margin-bottom:2px; }
+  .edu-sub  { font-size:10px; color:var(--text-dim); font-family:var(--mono); }
+  .edu-badge { font-family:var(--mono); font-size:9px; padding:2px 7px; border-radius:3px; }
+  .edu-done { color:var(--green); background:rgba(60,186,110,0.1); border:1px solid var(--green-dim); }
+  .edu-prog { color:var(--blue);  background:rgba(74,144,217,0.1);  border:1px solid var(--blue-dim); }
+
+  /* PROPERTIES */
+  .prop-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .prop-item { background:var(--bg3); border:1px solid var(--border); border-radius:5px; padding:10px 12px; display:flex; align-items:center; gap:10px; }
+  .prop-icon { font-size:22px; }
+  .prop-info { flex:1; }
+  .prop-name { font-size:12px; color:var(--text); margin-bottom:2px; }
+  .prop-income { font-family:var(--mono); font-size:10px; color:var(--gold); }
+
+  /* FACTION */
+  .faction-card { display:flex; align-items:center; gap:14px; padding:14px; background:var(--bg3); border:1px solid var(--purple-dim); border-radius:5px; margin-bottom:10px; }
+  .faction-emblem { width:48px; height:48px; border-radius:6px; background:linear-gradient(135deg,var(--purple-dim),#1a0a30); border:1px solid var(--purple); display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; }
+  .faction-name { font-family:var(--heading); font-size:20px; letter-spacing:2px; color:var(--purple); }
+  .faction-sub  { font-family:var(--mono); font-size:10px; color:var(--text-dim); }
+  .faction-role { font-family:var(--mono); font-size:9px; color:var(--purple); background:rgba(155,107,212,0.1); border:1px solid var(--purple-dim); padding:2px 8px; border-radius:3px; margin-left:auto; }
+  .faction-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+  .fs-box { background:var(--bg2); border:1px solid var(--border); border-radius:4px; padding:8px; text-align:center; }
+  .fs-val { font-family:var(--mono); font-size:18px; color:var(--text); }
+  .fs-label { font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; }
+
+  /* REPUTATION */
+  .rep-row { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+  .rep-label { font-size:10px; color:var(--text-dim); width:80px; font-family:var(--mono); }
+  .rep-track { flex:1; height:5px; background:var(--border); border-radius:3px; overflow:hidden; }
+  .rep-fill { height:100%; border-radius:3px; }
+  .rep-val { font-family:var(--mono); font-size:10px; width:36px; text-align:right; }
+
+  /* TABS */
+  .tabs { display:flex; border-bottom:1px solid var(--border); }
+  .tab { padding:9px 16px; cursor:pointer; font-size:11px; font-family:var(--mono); color:var(--text-dim); border-bottom:2px solid transparent; transition:all 0.15s; letter-spacing:1px; text-transform:uppercase; }
+  .tab:hover { color:var(--text); }
+  .tab.active { color:var(--gold); border-bottom-color:var(--gold); }
+
+  .section-divider { height:1px; background:var(--border); margin:14px 0; }
+
+  .online-pill { display:flex; align-items:center; gap:5px; font-family:var(--mono); font-size:10px; color:var(--text-dim); margin-left:8px; }
+  .online-dot  { width:6px; height:6px; border-radius:50%; background:var(--green); animation:pulse 2s infinite; }
+
+  ::-webkit-scrollbar { width:4px; }
+  ::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">SYNDICATE</div>
+  <div class="online-pill"><span class="online-dot"></span>1,247 online</div>
+  <div class="stat-pills">
+    <div class="pill"><span class="pill-label">⚡ NRG</span><div class="pill-bar"><div class="pill-fill fill-energy" style="width:74%"></div></div><span class="pill-val">74/100</span></div>
+    <div class="pill"><span class="pill-label">🔥 NERVE</span><div class="pill-bar"><div class="pill-fill fill-nerve" style="width:62%"></div></div><span class="pill-val">31/50</span></div>
+    <div class="pill"><span class="pill-label">😊 HAPPY</span><div class="pill-bar"><div class="pill-fill fill-happy" style="width:88%"></div></div><span class="pill-val">88/100</span></div>
+    <div class="pill"><span class="pill-label">❤️ HP</span><div class="pill-bar"><div class="pill-fill fill-hp" style="width:100%"></div></div><span class="pill-val">100/100</span></div>
+  </div>
+  <div class="topbar-cash">$24,850</div>
+  <div class="topbar-user">
+    <div class="avatar">G</div>
+    <span style="font-size:12px;color:var(--text-dim)">Ghost_Remy</span>
+  </div>
+</div>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="nav-section">
+      <div class="nav-label">Character</div>
+      <div class="nav-item active"><span class="nav-icon">👤</span> Profile</div>
+      <div class="nav-item"><span class="nav-icon">🎒</span> Inventory</div>
+      <div class="nav-item"><span class="nav-icon">📚</span> Education</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Actions</div>
+      <div class="nav-item"><span class="nav-icon">🗡</span> Crimes</div>
+      <div class="nav-item"><span class="nav-icon">⚔️</span> Attack</div>
+      <div class="nav-item"><span class="nav-icon">✈️</span> Travel</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Economy</div>
+      <div class="nav-item"><span class="nav-icon">🛒</span> Shop</div>
+      <div class="nav-item"><span class="nav-icon">📈</span> Market</div>
+      <div class="nav-item"><span class="nav-icon">🎲</span> Casino</div>
+      <div class="nav-item"><span class="nav-icon">🏦</span> Bank</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Social</div>
+      <div class="nav-item"><span class="nav-icon">🏴</span> Faction</div>
+      <div class="nav-item"><span class="nav-icon">✉️</span> Mail <span class="nav-badge">3</span></div>
+      <div class="nav-item"><span class="nav-icon">💬</span> Forums</div>
+      <div class="nav-item"><span class="nav-icon">🏆</span> Rankings</div>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <!-- HERO -->
+    <div class="profile-hero">
+      <div class="hero-banner">
+        <div class="hero-grid"></div>
+        <div class="hero-rank">⭐ RANK #47 GLOBAL</div>
+        <div class="hero-bottom"></div>
+      </div>
+      <div class="hero-content">
+        <div class="hero-avatar">G</div>
+        <div class="hero-meta">
+          <div class="hero-name">GHOST_REMY</div>
+          <div class="hero-sub">
+            <span class="hero-level">⚡ LEVEL 12</span>
+            <span class="hero-faction">🏴 [NITE] Nightwatch</span>
+            <span style="font-family:var(--mono);font-size:10px;color:var(--text-dim)">📍 New York</span>
+            <span class="hero-status"><span class="status-dot"></span> Online</span>
+          </div>
+        </div>
+        <div class="hero-actions">
+          <button class="btn btn-ghost">✉️ Message</button>
+          <button class="btn btn-ghost">➕ Add Friend</button>
+          <button class="btn btn-red">⚔️ Attack</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- XP -->
+    <div class="xp-section">
+      <div>
+        <div class="xp-label-row"><span style="color:var(--gold);font-weight:600">LEVEL 12 → 13</span><span>6,720 / 10,000 XP</span></div>
+        <div class="xp-track"><div class="xp-fill"></div></div>
+      </div>
+      <div class="xp-next"><strong>3,280</strong> XP to next level</div>
+    </div>
+
+    <div class="profile-grid">
+
+      <!-- OVERVIEW -->
+      <div class="card span3">
+        <div class="card-header">
+          <span class="card-title">OVERVIEW</span>
+          <span style="font-family:var(--mono);font-size:10px;color:var(--text-dim)">Member since Jan 3, 2025 · 51 days active</span>
+        </div>
+        <div class="card-body">
+          <div class="overview-grid">
+            <div class="ov-box ov-kills"><div class="ov-val">8</div><div class="ov-label">Kills</div><div class="ov-delta">+2 this week</div></div>
+            <div class="ov-box ov-crimes"><div class="ov-val">412</div><div class="ov-label">Crimes</div><div class="ov-delta" style="color:var(--gold)">87% success rate</div></div>
+            <div class="ov-box ov-wealth"><div class="ov-val">$167k</div><div class="ov-label">Net Worth</div><div class="ov-delta">$24.8k on hand</div></div>
+            <div class="ov-box ov-attacks"><div class="ov-val">34</div><div class="ov-label">Attacks Won</div><div class="ov-delta">71% win rate</div></div>
+            <div class="ov-box ov-deaths"><div class="ov-val" style="color:var(--muted)">6</div><div class="ov-label">Deaths</div><div class="ov-delta" style="color:var(--muted)">14 attacks lost</div></div>
+            <div class="ov-box ov-rank"><div class="ov-val" style="color:var(--purple)">#47</div><div class="ov-label">Global Rank</div><div class="ov-delta" style="color:var(--purple)">Top 4% of players</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- COMBAT STATS -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">COMBAT STATS</span>
+          <span class="card-badge badge-red">BATTLE READY</span>
+        </div>
+        <div class="card-body" style="padding:8px 14px">
+          <div class="combat-stat">
+            <span class="cs-icon">💪</span>
+            <div class="cs-info"><div class="cs-name">Strength</div><div class="cs-bar-track"><div class="cs-bar-fill" data-w="71" style="background:linear-gradient(90deg,#7a1f1f,var(--red));box-shadow:0 0 6px rgba(224,60,60,0.4)"></div></div></div>
+            <div class="cs-val">142</div>
+          </div>
+          <div class="combat-stat">
+            <span class="cs-icon">🛡</span>
+            <div class="cs-info"><div class="cs-name">Defense</div><div class="cs-bar-track"><div class="cs-bar-fill" data-w="59" style="background:linear-gradient(90deg,#1e3f6a,var(--blue));box-shadow:0 0 6px rgba(74,144,217,0.4)"></div></div></div>
+            <div class="cs-val">118</div>
+          </div>
+          <div class="combat-stat">
+            <span class="cs-icon">⚡</span>
+            <div class="cs-info"><div class="cs-name">Speed</div><div class="cs-bar-track"><div class="cs-bar-fill" data-w="48" style="background:linear-gradient(90deg,#1a5c35,var(--green));box-shadow:0 0 6px rgba(60,186,110,0.4)"></div></div></div>
+            <div class="cs-val">97</div>
+          </div>
+          <div class="combat-stat">
+            <span class="cs-icon">🎯</span>
+            <div class="cs-info"><div class="cs-name">Dexterity</div><div class="cs-bar-track"><div class="cs-bar-fill" data-w="55" style="background:linear-gradient(90deg,#6b5520,var(--gold));box-shadow:0 0 6px rgba(201,168,76,0.4)"></div></div></div>
+            <div class="cs-val">110</div>
+          </div>
+          <div class="combat-stat">
+            <span class="cs-icon">🧠</span>
+            <div class="cs-info"><div class="cs-name">Intelligence</div><div class="cs-bar-track"><div class="cs-bar-fill" data-w="81" style="background:linear-gradient(90deg,var(--purple-dim),var(--purple));box-shadow:0 0 6px rgba(155,107,212,0.4)"></div></div></div>
+            <div class="cs-val">203</div>
+          </div>
+          <div class="section-divider"></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:8px 10px">
+              <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">Weapon</div>
+              <div style="font-size:12px;color:var(--text)">🔫 Desert Eagle</div>
+              <div style="font-family:var(--mono);font-size:10px;color:var(--red)">+38 ATK</div>
+            </div>
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:8px 10px">
+              <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">Armor</div>
+              <div style="font-size:12px;color:var(--text)">🦺 Kevlar Vest</div>
+              <div style="font-family:var(--mono);font-size:10px;color:var(--blue)">+24 DEF</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MEDALS -->
+      <div class="card span2">
+        <div class="card-header">
+          <span class="card-title">MEDALS & ACHIEVEMENTS</span>
+          <span class="card-badge badge-gold">9 / 24 EARNED</span>
+        </div>
+        <div class="card-body">
+          <div class="medals-grid">
+            <div class="medal medal-gold"><div class="medal-icon">🔪<span class="medal-new"></span></div><div class="medal-label">First Blood</div><span class="tooltip-text">First kill earned</span></div>
+            <div class="medal medal-gold"><div class="medal-icon">💰</div><div class="medal-label">Street Hustler</div><span class="tooltip-text">Earn $10k from crimes</span></div>
+            <div class="medal medal-gold"><div class="medal-icon">⚡</div><div class="medal-label">Speed Demon</div><span class="tooltip-text">Reach 100 Speed</span></div>
+            <div class="medal medal-silver"><div class="medal-icon">🏴</div><div class="medal-label">Faction Bound</div><span class="tooltip-text">Join a faction</span></div>
+            <div class="medal medal-silver"><div class="medal-icon">🎰</div><div class="medal-label">High Roller</div><span class="tooltip-text">Win $5k in casino</span></div>
+            <div class="medal medal-silver"><div class="medal-icon">🛡</div><div class="medal-label">Iron Hide</div><span class="tooltip-text">Survive 10 attacks</span></div>
+            <div class="medal medal-bronze"><div class="medal-icon">🗡</div><div class="medal-label">Crime Spree</div><span class="tooltip-text">Commit 100 crimes</span></div>
+            <div class="medal medal-bronze"><div class="medal-icon">🏙</div><div class="medal-label">City Hopper</div><span class="tooltip-text">Visit 3 cities</span></div>
+            <div class="medal medal-bronze"><div class="medal-icon">📚</div><div class="medal-label">Student</div><span class="tooltip-text">Complete 1 course</span></div>
+            <div class="medal medal-locked"><div class="medal-icon">💀</div><div class="medal-label">Death Dealer</div><span class="tooltip-text">Locked: 25 kills</span></div>
+            <div class="medal medal-locked"><div class="medal-icon">🏆</div><div class="medal-label">Legend</div><span class="tooltip-text">Locked: Level 50</span></div>
+            <div class="medal medal-locked"><div class="medal-icon">💎</div><div class="medal-label">Millionaire</div><span class="tooltip-text">Locked: $1M net worth</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- REPUTATION -->
+      <div class="card">
+        <div class="card-header"><span class="card-title">REPUTATION</span></div>
+        <div class="card-body">
+          <div class="rep-row"><div class="rep-label">Underworld</div><div class="rep-track"><div class="rep-fill" style="width:72%;background:var(--red);box-shadow:0 0 6px rgba(224,60,60,0.4)"></div></div><div class="rep-val" style="color:var(--red)">720</div></div>
+          <div class="rep-row"><div class="rep-label">Street Cred</div><div class="rep-track"><div class="rep-fill" style="width:58%;background:var(--gold);box-shadow:0 0 6px rgba(201,168,76,0.4)"></div></div><div class="rep-val" style="color:var(--gold)">580</div></div>
+          <div class="rep-row"><div class="rep-label">Faction Rep</div><div class="rep-track"><div class="rep-fill" style="width:83%;background:var(--purple);box-shadow:0 0 6px rgba(155,107,212,0.4)"></div></div><div class="rep-val" style="color:var(--purple)">830</div></div>
+          <div class="rep-row"><div class="rep-label">Notoriety</div><div class="rep-track"><div class="rep-fill" style="width:41%;background:var(--blue);box-shadow:0 0 6px rgba(74,144,217,0.4)"></div></div><div class="rep-val" style="color:var(--blue)">410</div></div>
+          <div class="section-divider"></div>
+          <div style="text-align:center">
+            <div style="font-family:var(--heading);font-size:28px;letter-spacing:3px;color:var(--gold)">ENFORCER</div>
+            <div style="font-family:var(--mono);font-size:9px;color:var(--text-dim);margin-top:4px">Current Title · 2,540 total rep</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FACTION -->
+      <div class="card">
+        <div class="card-header"><span class="card-title">FACTION</span><span class="card-badge badge-purple">OFFICER</span></div>
+        <div class="card-body">
+          <div class="faction-card">
+            <div class="faction-emblem">🌙</div>
+            <div><div class="faction-name">NIGHTWATCH</div><div class="faction-sub">[NITE] · 38 members · Rank #8</div></div>
+          </div>
+          <div class="faction-stats">
+            <div class="fs-box"><div class="fs-val" style="color:var(--purple)">#8</div><div class="fs-label">Faction Rank</div></div>
+            <div class="fs-box"><div class="fs-val">14,200</div><div class="fs-label">Respect</div></div>
+            <div class="fs-box"><div class="fs-val" style="color:var(--gold)">$82k</div><div class="fs-label">Contributed</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PROPERTIES -->
+      <div class="card">
+        <div class="card-header"><span class="card-title">PROPERTIES</span><span class="card-badge badge-gold">$2,150/hr</span></div>
+        <div class="card-body">
+          <div class="prop-grid">
+            <div class="prop-item"><span class="prop-icon">🏠</span><div class="prop-info"><div class="prop-name">Safehouse</div><div class="prop-income">+$850/hr</div></div></div>
+            <div class="prop-item"><span class="prop-icon">🏭</span><div class="prop-info"><div class="prop-name">Warehouse</div><div class="prop-income">+$1,200/hr</div></div></div>
+            <div class="prop-item" style="opacity:0.35;border-style:dashed;cursor:pointer"><span class="prop-icon">➕</span><div class="prop-info"><div class="prop-name" style="color:var(--text-dim)">Buy Property</div><div class="prop-income" style="color:var(--muted)">from $5,000</div></div></div>
+            <div class="prop-item" style="opacity:0.35;border-style:dashed;cursor:pointer"><span class="prop-icon">➕</span><div class="prop-info"><div class="prop-name" style="color:var(--text-dim)">Buy Property</div><div class="prop-income" style="color:var(--muted)">from $5,000</div></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ATTACK LOG -->
+      <div class="card span2">
+        <div class="card-header"><span class="card-title">ATTACK LOG</span></div>
+        <div class="tabs">
+          <div class="tab active" onclick="switchTab(event,'all')">All</div>
+          <div class="tab" onclick="switchTab(event,'wins')">Wins</div>
+          <div class="tab" onclick="switchTab(event,'losses')">Losses</div>
+        </div>
+        <div class="attack-log" id="attack-log">
+          <div class="attack-row"><span class="ar-icon">⚔️</span><span class="ar-desc">Attacked <strong>Viper_K</strong></span><span class="ar-result ar-win">WIN +$1,200</span><span class="ar-time">14m ago</span></div>
+          <div class="attack-row"><span class="ar-icon">🛡</span><span class="ar-desc">Attacked by <strong>DarkMatter</strong></span><span class="ar-result ar-win">DEFENDED</span><span class="ar-time">2h ago</span></div>
+          <div class="attack-row"><span class="ar-icon">💀</span><span class="ar-desc">Attacked <strong>NightRaven</strong></span><span class="ar-result ar-win">KILL +80XP</span><span class="ar-time">6h ago</span></div>
+          <div class="attack-row"><span class="ar-icon">🏥</span><span class="ar-desc">Attacked by <strong>IronFist99</strong></span><span class="ar-result ar-loss">HOSPITALIZED</span><span class="ar-time">1d ago</span></div>
+          <div class="attack-row"><span class="ar-icon">⚔️</span><span class="ar-desc">Attacked <strong>CrimsonFox</strong></span><span class="ar-result ar-win">WIN +$640</span><span class="ar-time">1d ago</span></div>
+          <div class="attack-row"><span class="ar-icon">⚔️</span><span class="ar-desc">Attacked <strong>Phantom_X</strong></span><span class="ar-result ar-loss">LOSS</span><span class="ar-time">2d ago</span></div>
+        </div>
+      </div>
+
+      <!-- EDUCATION -->
+      <div class="card">
+        <div class="card-header"><span class="card-title">EDUCATION</span><span class="card-badge badge-blue">1 IN PROGRESS</span></div>
+        <div>
+          <div class="edu-item"><span class="edu-icon">🧠</span><div class="edu-info"><div class="edu-name">Advanced Psychology</div><div class="edu-sub">+20 Intelligence · 2h 14m left</div></div><span class="edu-badge edu-prog">IN PROGRESS</span></div>
+          <div class="edu-item"><span class="edu-icon">🏋️</span><div class="edu-info"><div class="edu-name">Physical Training I</div><div class="edu-sub">+15 Strength · Completed</div></div><span class="edu-badge edu-done">✓ DONE</span></div>
+          <div class="edu-item"><span class="edu-icon">🎯</span><div class="edu-info"><div class="edu-name">Marksmanship Basics</div><div class="edu-sub">+10 Dexterity · Completed</div></div><span class="edu-badge edu-done">✓ DONE</span></div>
+          <div class="edu-item" style="opacity:0.4;cursor:pointer"><span class="edu-icon">🔒</span><div class="edu-info"><div class="edu-name">Advanced Combat</div><div class="edu-sub">Requires Level 15</div></div><span class="edu-badge" style="color:var(--muted);border:1px solid var(--border)">LOCKED</span></div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script>
+function switchTab(e, tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  e.currentTarget.classList.add('active');
+  const rows = document.querySelectorAll('#attack-log .attack-row');
+  rows.forEach(row => {
+    const isWin  = row.querySelector('.ar-win');
+    const isLoss = row.querySelector('.ar-loss');
+    row.style.display = tab === 'all' ? '' : (tab === 'wins' && isWin) || (tab === 'losses' && isLoss) ? '' : 'none';
+  });
+}
+
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    document.querySelectorAll('.cs-bar-fill').forEach(bar => {
+      bar.style.width = bar.dataset.w + '%';
+    });
+  }, 200);
+});
+</script>
+</body>
+</html>

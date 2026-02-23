@@ -1,0 +1,1275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SYNDICATE — Inventory</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0a0a0b; --bg2:#111114; --bg3:#18181d; --bg4:#1e1e26;
+    --border:#2a2a35; --border2:#3a3a48;
+    --red:#e03c3c; --red-dim:#7a1f1f;
+    --gold:#c9a84c; --gold-dim:#6b5520; --gold-glow:rgba(201,168,76,0.12);
+    --green:#3cba6e; --green-dim:#1a5c35;
+    --blue:#4a90d9; --blue-dim:#1e3f6a;
+    --purple:#a855f7; --purple-dim:#4c1d95;
+    --orange:#f97316; --orange-dim:#7c2d12;
+    --muted:#55556a; --text:#d0d0e0; --text-dim:#7a7a90;
+    --mono:'Share Tech Mono',monospace;
+    --heading:'Bebas Neue',cursive;
+    --body:'Barlow',sans-serif;
+    --r-common:#7a7a90; --r-uncommon:#3cba6e; --r-rare:#4a90d9;
+    --r-epic:#a855f7; --r-legendary:#c9a84c;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--text);font-family:var(--body);font-size:13px;min-height:100vh}
+  body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.02) 2px,rgba(0,0,0,0.02) 4px);pointer-events:none;z-index:9999}
+
+  /* TOPBAR */
+  .topbar{background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;height:48px;gap:20px;position:sticky;top:0;z-index:200}
+  .logo{font-family:var(--heading);font-size:26px;letter-spacing:4px;color:var(--gold);text-shadow:0 0 20px rgba(201,168,76,0.4)}
+  .topbar-nav{display:flex;gap:2px;margin-left:8px}
+  .tnav{padding:5px 12px;font-family:var(--mono);font-size:10px;letter-spacing:1px;color:var(--text-dim);cursor:pointer;border-radius:3px;transition:all .15s;text-transform:uppercase}
+  .tnav:hover{background:var(--bg3);color:var(--text)}
+  .tnav.active{background:var(--gold-glow);color:var(--gold)}
+  .tb-right{margin-left:auto;display:flex;align-items:center;gap:16px}
+  .tb-stat{font-family:var(--mono);font-size:11px;color:var(--text-dim)}
+  .tb-stat span{color:var(--text)}
+  .tb-cash{font-family:var(--mono);font-size:13px;color:var(--gold)}
+  .tb-av{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--red-dim),var(--gold-dim));border:1px solid var(--gold);display:flex;align-items:center;justify-content:center;font-family:var(--heading);font-size:14px;color:var(--gold)}
+
+  /* LAYOUT */
+  .layout{display:flex;min-height:calc(100vh - 48px)}
+  .sidebar{width:180px;background:var(--bg2);border-right:1px solid var(--border);padding:12px 0;flex-shrink:0;position:sticky;top:48px;height:calc(100vh - 48px);overflow-y:auto}
+  .nav-section{margin-bottom:8px}
+  .nav-label{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);padding:8px 16px 4px;font-family:var(--mono)}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:8px 16px;cursor:pointer;transition:all .15s;border-left:2px solid transparent;color:var(--text-dim);font-size:12px}
+  .nav-item:hover{background:var(--bg3);color:var(--text);border-left-color:var(--border2)}
+  .nav-item.active{background:var(--gold-glow);color:var(--gold);border-left-color:var(--gold)}
+  .nav-icon{font-size:14px;width:16px;text-align:center}
+  .nav-badge{margin-left:auto;background:var(--red);color:white;font-size:9px;padding:1px 5px;border-radius:8px}
+
+  .main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+
+  /* PAGE HEADER */
+  .page-header{padding:16px 24px;border-bottom:1px solid var(--border);background:var(--bg2);display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+  .page-title{font-family:var(--heading);font-size:28px;letter-spacing:4px;color:var(--text);line-height:1}
+  .page-sub{font-family:var(--mono);font-size:10px;color:var(--text-dim);margin-top:3px}
+
+  .equip-bar{display:flex;gap:10px;flex-wrap:wrap}
+  .equip-slot{display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--border);border-radius:5px;padding:7px 12px;cursor:pointer;transition:all .15s;min-width:170px}
+  .equip-slot:hover{border-color:var(--border2)}
+  .equip-slot.filled{border-color:var(--gold-dim);background:rgba(201,168,76,0.04)}
+  .es-icon{width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+  .es-label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-family:var(--mono)}
+  .es-name{font-size:11px;color:var(--text);font-weight:500;margin-top:1px}
+  .es-bonus{font-family:var(--mono);font-size:10px;color:var(--gold)}
+
+  .hdr-right{margin-left:auto;display:flex;gap:8px;align-items:center}
+  .btn{padding:7px 14px;border-radius:4px;cursor:pointer;font-family:var(--mono);font-size:11px;border:1px solid;transition:all .15s;letter-spacing:.5px}
+  .btn-primary{background:var(--gold-dim);border-color:var(--gold);color:var(--gold)}
+  .btn-primary:hover{background:var(--gold);color:var(--bg)}
+  .btn-ghost{background:transparent;border-color:var(--border);color:var(--text-dim)}
+  .btn-ghost:hover{border-color:var(--border2);color:var(--text)}
+  .btn-red{background:rgba(224,60,60,.1);border-color:var(--red-dim);color:var(--red)}
+  .btn-red:hover{background:var(--red);color:white}
+  .btn-green{background:rgba(60,186,110,.1);border-color:var(--green-dim);color:var(--green)}
+  .btn-green:hover{background:var(--green);color:var(--bg)}
+  .btn-sm{padding:5px 10px;font-size:10px}
+
+  /* FILTER BAR */
+  .filter-bar{padding:10px 24px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .ftabs{display:flex;gap:2px}
+  .ftab{padding:5px 14px;font-family:var(--mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);cursor:pointer;border:1px solid var(--border);border-radius:3px;transition:all .15s}
+  .ftab:hover{color:var(--text);border-color:var(--border2)}
+  .ftab.active{background:var(--gold-glow);color:var(--gold);border-color:var(--gold-dim)}
+  .fsep{width:1px;height:24px;background:var(--border)}
+  .rdots{display:flex;gap:4px}
+  .rdot{width:26px;height:26px;border-radius:4px;cursor:pointer;border:2px solid transparent;transition:all .15s;display:flex;align-items:center;justify-content:center;font-size:11px}
+  .rdot:hover,.rdot.active{border-color:currentColor;transform:scale(1.12)}
+  .rd-all{color:var(--text-dim);background:var(--bg3)}
+  .rd-C{color:var(--r-common);background:rgba(122,122,144,.1)}
+  .rd-U{color:var(--r-uncommon);background:rgba(60,186,110,.1)}
+  .rd-R{color:var(--r-rare);background:rgba(74,144,217,.1)}
+  .rd-E{color:var(--r-epic);background:rgba(168,85,247,.1)}
+  .rd-L{color:var(--r-legendary);background:rgba(201,168,76,.1)}
+  .search-wrap{margin-left:auto;display:flex;align-items:center;gap:6px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:5px 10px}
+  .search-wrap input{background:none;border:none;outline:none;color:var(--text);font-family:var(--mono);font-size:11px;width:160px}
+  .search-wrap input::placeholder{color:var(--muted)}
+  .sort-sel{background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:5px 10px;color:var(--text-dim);font-family:var(--mono);font-size:10px;cursor:pointer;outline:none}
+
+  /* CONTENT */
+  .content{display:flex;flex:1;overflow:hidden}
+  .grid-wrap{flex:1;overflow-y:auto;padding:20px 24px}
+  .inv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:12px}
+
+  /* ═══ ITEM CARD ═══ */
+  .icard{background:var(--bg2);border:1px solid var(--border);border-radius:7px;overflow:hidden;cursor:pointer;transition:all .2s;position:relative;animation:cin .3s ease both}
+  @keyframes cin{from{opacity:0;transform:scale(.93)}to{opacity:1;transform:scale(1)}}
+  .icard:hover{border-color:var(--border2);transform:translateY(-4px);box-shadow:0 12px 32px rgba(0,0,0,.6)}
+  .icard.sel{box-shadow:0 0 0 2px var(--gold);border-color:var(--gold)}
+  .icard.eqp{box-shadow:0 0 0 2px var(--green);border-color:var(--green)}
+
+  /* rarity accent line */
+  .icard::after{content:'';position:absolute;left:0;top:0;bottom:0;width:3px}
+  .icard.rC::after{background:var(--r-common)}
+  .icard.rU::after{background:var(--r-uncommon)}
+  .icard.rR::after{background:var(--r-rare)}
+  .icard.rE::after{background:var(--r-epic)}
+  .icard.rL::after{background:var(--r-legendary);box-shadow:2px 0 14px var(--r-legendary)}
+
+  /* WEAPON VISUAL AREA */
+  .item-visual{height:100px;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .item-visual svg{max-width:100%;max-height:88px;filter:drop-shadow(0 2px 8px rgba(0,0,0,.8))}
+
+  /* rarity background glow on hover */
+  .icard:hover .item-visual::before{opacity:1}
+  .item-visual::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 60%,var(--glow-col,rgba(201,168,76,.08)),transparent 70%);opacity:0;transition:opacity .3s}
+
+  .item-visual .qty-badge{position:absolute;top:6px;right:7px;background:rgba(0,0,0,.75);border:1px solid var(--border);border-radius:3px;padding:1px 6px;font-family:var(--mono);font-size:10px;color:var(--text-dim)}
+  .item-visual .eqp-badge{position:absolute;top:6px;left:8px;background:rgba(60,186,110,.18);border:1px solid var(--green-dim);border-radius:2px;padding:1px 5px;font-family:var(--mono);font-size:9px;color:var(--green)}
+
+  .item-info{padding:8px 10px 10px}
+  .item-name{font-size:12px;font-weight:600;color:var(--text);line-height:1.2;margin-bottom:2px}
+  .item-rar{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:1px}
+  .item-stat{font-family:var(--mono);font-size:10px;margin-top:5px}
+  .rC-txt{color:var(--r-common)} .rU-txt{color:var(--r-uncommon)} .rR-txt{color:var(--r-rare)} .rE-txt{color:var(--r-epic)} .rL-txt{color:var(--r-legendary)}
+
+  /* ATK bar mini */
+  .atk-mini{margin-top:5px;height:3px;background:var(--border);border-radius:2px;overflow:hidden}
+  .atk-mini-fill{height:100%;border-radius:2px}
+
+  /* ═══ DETAIL PANEL ═══ */
+  .detail{width:310px;flex-shrink:0;background:var(--bg2);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto}
+  ::-webkit-scrollbar{width:4px;height:4px}
+  ::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+  .detail-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--muted);font-family:var(--mono);font-size:11px;text-align:center;padding:24px}
+  .detail-empty-icon{font-size:42px;opacity:.25}
+
+  .det-hero{height:160px;position:relative;display:flex;align-items:center;justify-content:center;background:var(--bg3);border-bottom:1px solid var(--border);overflow:hidden}
+  .det-hero svg{max-width:200px;max-height:140px;filter:drop-shadow(0 4px 20px rgba(0,0,0,.9))}
+  .det-hero-glow{position:absolute;inset:0;background:radial-gradient(circle at 50% 60%,var(--hero-glow,rgba(201,168,76,.15)),transparent 70%)}
+  .det-rar-bar{position:absolute;bottom:0;left:0;right:0;height:3px}
+  .det-hero-emoji{font-size:70px;position:relative;z-index:1;filter:drop-shadow(0 4px 16px rgba(0,0,0,.8))}
+
+  .det-body{padding:16px;flex:1}
+  .det-name{font-family:var(--heading);font-size:22px;letter-spacing:2px;line-height:1.1;margin-bottom:5px}
+  .det-tags{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:12px}
+  .tag{font-family:var(--mono);font-size:9px;letter-spacing:1px;padding:2px 8px;border-radius:3px;text-transform:uppercase;border:1px solid}
+  .tag-ty{color:var(--text-dim);border-color:var(--border)}
+  .tag-C{color:var(--r-common);border-color:rgba(122,122,144,.4);background:rgba(122,122,144,.08)}
+  .tag-U{color:var(--r-uncommon);border-color:rgba(60,186,110,.4);background:rgba(60,186,110,.08)}
+  .tag-R{color:var(--r-rare);border-color:rgba(74,144,217,.4);background:rgba(74,144,217,.08)}
+  .tag-E{color:var(--r-epic);border-color:rgba(168,85,247,.4);background:rgba(168,85,247,.08)}
+  .tag-L{color:var(--r-legendary);border-color:rgba(201,168,76,.4);background:rgba(201,168,76,.08)}
+  .tag-EQ{color:var(--green);border-color:rgba(60,186,110,.4);background:rgba(60,186,110,.08)}
+
+  .det-desc{font-size:12px;color:var(--text-dim);line-height:1.6;margin-bottom:14px}
+  .div{height:1px;background:var(--border);margin:12px 0}
+
+  /* STAT BARS in detail */
+  .stat-bars{display:flex;flex-direction:column;gap:8px}
+  .sbar{display:flex;align-items:center;gap:8px}
+  .sbar-label{font-family:var(--mono);font-size:9px;color:var(--text-dim);width:50px;flex-shrink:0;text-transform:uppercase}
+  .sbar-track{flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden}
+  .sbar-fill{height:100%;border-radius:3px;transition:width 1s ease}
+  .sbar-val{font-family:var(--mono);font-size:10px;width:36px;text-align:right;flex-shrink:0}
+  .pos{color:var(--green)} .neg{color:var(--red)} .neu{color:var(--text)} .gld{color:var(--gold)}
+
+  .kv-list{display:flex;flex-direction:column;gap:7px}
+  .kv{display:flex;justify-content:space-between;align-items:center}
+  .kv-k{font-family:var(--mono);font-size:10px;color:var(--text-dim)}
+  .kv-v{font-family:var(--mono);font-size:11px;font-weight:600}
+
+  /* COMPARE BOX */
+  .compare-box{background:var(--bg3);border:1px solid var(--border);border-radius:5px;padding:10px 12px;margin-top:10px}
+  .compare-title{font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+  .compare-row{display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:10px;padding:2px 0}
+  .cmp-label{color:var(--text-dim)}
+  .cmp-cur{color:var(--text)}
+  .cmp-new{font-weight:600}
+  .cmp-arrow{color:var(--muted)}
+  .upgrade{color:var(--green)} .downgrade{color:var(--red)} .same{color:var(--muted)}
+
+  .det-actions{padding:14px 16px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:8px}
+  .act-row{display:flex;gap:8px}
+  .act-row .btn{flex:1;text-align:center}
+  .qty-ctrl{display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:5px 10px}
+  .qty-btn{background:var(--border);border:none;color:var(--text);width:20px;height:20px;border-radius:3px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:background .1s}
+  .qty-btn:hover{background:var(--border2)}
+  .qty-val{font-family:var(--mono);font-size:12px;min-width:20px;text-align:center}
+
+  /* OVERLAY / MODAL */
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.78);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:500}
+  .overlay.show{display:flex}
+  .modal{background:var(--bg2);border:1px solid var(--border2);border-radius:8px;width:360px;overflow:hidden;animation:min .2s ease}
+  @keyframes min{from{opacity:0;transform:scale(.95) translateY(8px)}}
+  .modal-hdr{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+  .modal-title{font-family:var(--heading);font-size:18px;letter-spacing:2px}
+  .modal-x{cursor:pointer;color:var(--muted);font-size:18px}
+  .modal-x:hover{color:var(--text)}
+  .modal-body{padding:18px;font-size:13px;color:var(--text-dim);line-height:1.6}
+  .modal-ftr{padding:12px 18px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
+
+  /* TOAST */
+  .toast-area{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:8px;z-index:1000}
+  .toast{background:var(--bg2);border:1px solid var(--border2);border-radius:6px;padding:10px 16px;font-family:var(--mono);font-size:11px;display:flex;align-items:center;gap:10px;min-width:220px;animation:tin .3s ease}
+  @keyframes tin{from{opacity:0;transform:translateX(16px)}}
+  .toast.success{border-left:3px solid var(--green)}
+  .toast.fail{border-left:3px solid var(--red)}
+  .toast.info{border-left:3px solid var(--gold)}
+
+  .no-results{text-align:center;padding:60px 20px;color:var(--muted);font-family:var(--mono);font-size:12px;grid-column:1/-1}
+  .no-results-icon{font-size:36px;margin-bottom:12px;opacity:.4}
+
+  /* SECTION HEADER in grid */
+  .grid-section-hdr{grid-column:1/-1;font-family:var(--heading);font-size:14px;letter-spacing:3px;color:var(--text-dim);padding:4px 0 2px;border-bottom:1px solid var(--border);margin-top:4px;display:flex;align-items:center;gap:10px}
+  .grid-section-hdr span{font-family:var(--mono);font-size:10px;color:var(--muted);font-weight:400;letter-spacing:1px}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">SYNDICATE</div>
+  <div class="topbar-nav">
+    <div class="tnav">Crimes</div>
+    <div class="tnav">Profile</div>
+    <div class="tnav">Attack</div>
+    <div class="tnav active">Inventory</div>
+    <div class="tnav">Market</div>
+  </div>
+  <div class="tb-right">
+    <div class="tb-stat">⚡ <span>74</span></div>
+    <div class="tb-stat">🔥 <span>31</span></div>
+    <div class="tb-stat">❤️ <span>100</span></div>
+    <div class="tb-cash" id="cash-display">$24,850</div>
+    <div class="tb-av">G</div>
+  </div>
+</div>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="nav-section">
+      <div class="nav-label">Character</div>
+      <div class="nav-item"><span class="nav-icon">👤</span> Profile</div>
+      <div class="nav-item active"><span class="nav-icon">🎒</span> Inventory</div>
+      <div class="nav-item"><span class="nav-icon">📚</span> Education</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Actions</div>
+      <div class="nav-item"><span class="nav-icon">🗡</span> Crimes</div>
+      <div class="nav-item"><span class="nav-icon">⚔️</span> Attack</div>
+      <div class="nav-item"><span class="nav-icon">✈️</span> Travel</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Economy</div>
+      <div class="nav-item"><span class="nav-icon">🛒</span> Shop</div>
+      <div class="nav-item"><span class="nav-icon">📈</span> Market</div>
+      <div class="nav-item"><span class="nav-icon">🎲</span> Casino</div>
+      <div class="nav-item"><span class="nav-icon">🏦</span> Bank</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Social</div>
+      <div class="nav-item"><span class="nav-icon">🏴</span> Faction</div>
+      <div class="nav-item"><span class="nav-icon">✉️</span> Mail <span class="nav-badge">3</span></div>
+      <div class="nav-item"><span class="nav-icon">💬</span> Forums</div>
+      <div class="nav-item"><span class="nav-icon">🏆</span> Rankings</div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="page-header">
+      <div>
+        <div class="page-title">🎒 INVENTORY</div>
+        <div class="page-sub" id="inv-sub">Loading…</div>
+      </div>
+      <div class="equip-bar" id="equip-bar"></div>
+      <div class="hdr-right">
+        <button class="btn btn-ghost btn-sm" onclick="unequipAll()">Unequip All</button>
+        <button class="btn btn-primary btn-sm">🛒 Visit Shop</button>
+      </div>
+    </div>
+
+    <div class="filter-bar">
+      <div class="ftabs" id="ftabs">
+        <div class="ftab active" onclick="setFilter('all',this)">All</div>
+        <div class="ftab" onclick="setFilter('weapon',this)">Weapons</div>
+        <div class="ftab" onclick="setFilter('armor',this)">Armor</div>
+        <div class="ftab" onclick="setFilter('drug',this)">Drugs</div>
+        <div class="ftab" onclick="setFilter('consumable',this)">Consumables</div>
+        <div class="ftab" onclick="setFilter('misc',this)">Misc</div>
+      </div>
+      <div class="fsep"></div>
+      <div class="rdots">
+        <div class="rdot rd-all active" title="All"       onclick="setRar('all',this)">★</div>
+        <div class="rdot rd-C"          title="Common"    onclick="setRar('C',this)">●</div>
+        <div class="rdot rd-U"          title="Uncommon"  onclick="setRar('U',this)">●</div>
+        <div class="rdot rd-R"          title="Rare"      onclick="setRar('R',this)">●</div>
+        <div class="rdot rd-E"          title="Epic"      onclick="setRar('E',this)">●</div>
+        <div class="rdot rd-L"          title="Legendary" onclick="setRar('L',this)">◆</div>
+      </div>
+      <select class="sort-sel" id="sort-sel" onchange="render()">
+        <option value="rarity">Sort: Rarity</option>
+        <option value="name">Sort: Name</option>
+        <option value="atk">Sort: Attack</option>
+        <option value="value">Sort: Value</option>
+      </select>
+      <div class="search-wrap">
+        <span style="color:var(--muted);font-size:12px">🔍</span>
+        <input id="search" placeholder="Search items…" oninput="render()">
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="grid-wrap">
+        <div class="inv-grid" id="inv-grid"></div>
+      </div>
+      <div class="detail" id="detail">
+        <div class="detail-empty"><div class="detail-empty-icon">🎒</div><div>Select an item<br>to view details</div></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- MODAL -->
+<div class="overlay" id="overlay" onclick="if(event.target===this)hideModal()">
+  <div class="modal">
+    <div class="modal-hdr"><span class="modal-title" id="modal-title">CONFIRM</span><span class="modal-x" onclick="hideModal()">✕</span></div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-ftr" id="modal-ftr"></div>
+  </div>
+</div>
+<div class="toast-area" id="toasts"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// SVG WEAPON RENDERERS
+// ═══════════════════════════════════════════════════════════════
+
+const SVG = {
+
+  // ── Pistols ──────────────────────────────────────────────────
+  pistol(col='#aaa',glow='rgba(255,255,255,0.1)',trigger='#888'){
+    return `<svg viewBox="0 0 120 70" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="pg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${col}"/><stop offset="100%" stop-color="${shd(col)}"/></linearGradient>
+        <filter id="gf"><feGaussianBlur stdDeviation="3" result="blur"/><feComposite in="SourceGraphic" in2="blur"/></filter>
+      </defs>
+      <!-- barrel -->
+      <rect x="8" y="24" width="62" height="10" rx="2" fill="url(#pg)"/>
+      <rect x="8" y="24" width="62" height="3" rx="1" fill="${lgt(col)}"/>
+      <!-- slide -->
+      <rect x="30" y="19" width="38" height="18" rx="2" fill="url(#pg)"/>
+      <rect x="30" y="19" width="38" height="4" rx="1" fill="${lgt(col)}"/>
+      <!-- ejection port -->
+      <rect x="48" y="21" width="12" height="6" rx="1" fill="${shd(col)}" opacity=".7"/>
+      <!-- grip -->
+      <path d="M68 33 L72 58 L84 58 L80 33 Z" fill="${shd(col)}"/>
+      <!-- grip texture -->
+      <line x1="71" y1="38" x2="83" y2="38" stroke="${glow}" stroke-width="1"/>
+      <line x1="71" y1="42" x2="83" y2="42" stroke="${glow}" stroke-width="1"/>
+      <line x1="71" y1="46" x2="83" y2="46" stroke="${glow}" stroke-width="1"/>
+      <line x1="71" y1="50" x2="83" y2="50" stroke="${glow}" stroke-width="1"/>
+      <line x1="71" y1="54" x2="83" y2="54" stroke="${glow}" stroke-width="1"/>
+      <!-- trigger guard -->
+      <path d="M68 35 Q74 48 80 48 L80 52 Q70 52 64 38 Z" fill="none" stroke="${col}" stroke-width="1.5"/>
+      <!-- trigger -->
+      <rect x="70" y="36" width="3" height="8" rx="1" fill="${trigger}"/>
+      <!-- sight front -->
+      <rect x="10" y="22" width="3" height="4" rx="1" fill="${lgt(col)}"/>
+      <!-- sight rear -->
+      <rect x="60" y="21" width="6" height="3" rx="1" fill="${lgt(col)}"/>
+      <rect x="62" y="21" width="2" height="3" fill="${shd(col)}"/>
+      <!-- muzzle highlight -->
+      <ellipse cx="9" cy="29" rx="2" ry="4" fill="${lgt(col)}" opacity=".5"/>
+    </svg>`;
+  },
+
+  deagle(col='#c0a060'){
+    return `<svg viewBox="0 0 130 75" xmlns="http://www.w3.org/2000/svg">
+      <defs><linearGradient id="dg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${col}"/><stop offset="100%" stop-color="${shd(col)}"/></linearGradient></defs>
+      <!-- barrel -->
+      <rect x="6" y="26" width="68" height="12" rx="2" fill="url(#dg)"/>
+      <rect x="6" y="26" width="68" height="3" fill="${lgt(col)}" rx="1"/>
+      <!-- rail under barrel -->
+      <rect x="16" y="36" width="50" height="4" rx="1" fill="${shd(col)}"/>
+      <rect x="20" y="37" width="6" height="2" fill="${col}" rx="1"/>
+      <rect x="30" y="37" width="6" height="2" fill="${col}" rx="1"/>
+      <rect x="40" y="37" width="6" height="2" fill="${col}" rx="1"/>
+      <!-- slide chunky -->
+      <rect x="36" y="20" width="44" height="22" rx="3" fill="url(#dg)"/>
+      <rect x="36" y="20" width="44" height="5" rx="2" fill="${lgt(col)}"/>
+      <!-- serrations on slide -->
+      <line x1="60" y1="21" x2="60" y2="41" stroke="${shd(col)}" stroke-width="1.5"/>
+      <line x1="64" y1="21" x2="64" y2="41" stroke="${shd(col)}" stroke-width="1.5"/>
+      <line x1="68" y1="21" x2="68" y2="41" stroke="${shd(col)}" stroke-width="1.5"/>
+      <line x1="72" y1="21" x2="72" y2="41" stroke="${shd(col)}" stroke-width="1.5"/>
+      <!-- ejection -->
+      <rect x="52" y="23" width="14" height="8" rx="1" fill="${shd(col)}" opacity=".8"/>
+      <!-- grip -->
+      <path d="M76 37 L82 65 L97 65 L91 37 Z" fill="${shd(col)}"/>
+      <!-- grip panels -->
+      <path d="M78 40 L80 62 L94 62 L92 40 Z" fill="${col}" opacity=".3"/>
+      <line x1="79" y1="44" x2="93" y2="44" stroke="rgba(0,0,0,.3)" stroke-width="1"/>
+      <line x1="79" y1="48" x2="93" y2="48" stroke="rgba(0,0,0,.3)" stroke-width="1"/>
+      <line x1="79" y1="52" x2="93" y2="52" stroke="rgba(0,0,0,.3)" stroke-width="1"/>
+      <line x1="79" y1="56" x2="93" y2="56" stroke="rgba(0,0,0,.3)" stroke-width="1"/>
+      <!-- trigger guard -->
+      <path d="M76 40 Q84 56 91 56 L91 60 Q80 60 73 44 Z" fill="none" stroke="${col}" stroke-width="2"/>
+      <!-- trigger -->
+      <rect x="79" y="42" width="3.5" height="10" rx="1.5" fill="${lgt(col)}"/>
+      <!-- sights -->
+      <rect x="8" y="24" width="4" height="5" rx="1" fill="${lgt(col)}"/>
+      <rect x="71" y="22" width="7" height="4" rx="1" fill="${lgt(col)}"/>
+      <rect x="74" y="22" width="2" height="4" fill="${shd(col)}"/>
+      <!-- logo on slide -->
+      <text x="44" y="35" font-size="5" fill="${shd(col)}" font-family="monospace" opacity=".7">DESERT EAGLE</text>
+    </svg>`;
+  },
+
+  revolver(col='#888'){
+    return `<svg viewBox="0 0 130 80" xmlns="http://www.w3.org/2000/svg">
+      <defs><linearGradient id="rg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${col}"/><stop offset="100%" stop-color="${shd(col)}"/></linearGradient></defs>
+      <!-- barrel -->
+      <rect x="6" y="26" width="58" height="10" rx="2" fill="url(#rg)"/>
+      <rect x="6" y="26" width="58" height="3" fill="${lgt(col)}" rx="1"/>
+      <!-- cylinder -->
+      <circle cx="75" cy="32" r="18" fill="${shd(col)}" stroke="${col}" stroke-width="1.5"/>
+      <circle cx="75" cy="32" r="14" fill="${col}" opacity=".5"/>
+      <!-- cylinder chambers -->
+      <circle cx="75" cy="18" r="4" fill="${shd(col)}" stroke="${lgt(col)}" stroke-width=".8"/>
+      <circle cx="87" cy="24" r="4" fill="${shd(col)}" stroke="${lgt(col)}" stroke-width=".8"/>
+      <circle cx="87" cy="40" r="4" fill="${shd(col)}" stroke="${lgt(col)}" stroke-width=".8"/>
+      <circle cx="75" cy="46" r="4" fill="${shd(col)}" stroke="${lgt(col)}" stroke-width=".8"/>
+      <circle cx="63" cy="40" r="4" fill="${shd(col)}" stroke="${lgt(col)}" stroke-width=".8"/>
+      <circle cx="63" cy="24" r="4" fill="${shd(col)}" stroke="${lgt(col)}" stroke-width=".8"/>
+      <!-- center pin -->
+      <circle cx="75" cy="32" r="3" fill="${lgt(col)}"/>
+      <!-- frame connecting barrel to grip -->
+      <path d="M62 30 L62 36 L78 50 L90 50 L90 36 Z" fill="${shd(col)}" opacity=".5"/>
+      <!-- grip -->
+      <path d="M87 40 L95 68 L108 68 L100 40 Z" fill="${shd(col)}"/>
+      <path d="M89 44 L92 66 L106 66 L103 44 Z" fill="${col}" opacity=".25"/>
+      <line x1="90" y1="48" x2="104" y2="48" stroke="rgba(0,0,0,.35)" stroke-width="1.2"/>
+      <line x1="90" y1="52" x2="104" y2="52" stroke="rgba(0,0,0,.35)" stroke-width="1.2"/>
+      <line x1="90" y1="56" x2="104" y2="56" stroke="rgba(0,0,0,.35)" stroke-width="1.2"/>
+      <line x1="90" y1="60" x2="104" y2="60" stroke="rgba(0,0,0,.35)" stroke-width="1.2"/>
+      <!-- hammer -->
+      <rect x="92" y="32" width="6" height="10" rx="2" fill="${col}"/>
+      <rect x="93" y="28" width="5" height="6" rx="1" fill="${lgt(col)}"/>
+      <!-- trigger guard -->
+      <path d="M87 44 Q97 60 103 60 L103 64 Q92 64 84 48 Z" fill="none" stroke="${col}" stroke-width="1.5"/>
+      <rect x="90" y="46" width="3" height="9" rx="1" fill="${lgt(col)}"/>
+      <!-- sight -->
+      <rect x="8" y="24" width="4" height="4" rx="1" fill="${lgt(col)}"/>
+    </svg>`;
+  },
+
+  // ── Rifles / SMG ─────────────────────────────────────────────
+  ak47(col='#7a6244'){
+    return `<svg viewBox="0 0 160 65" xmlns="http://www.w3.org/2000/svg">
+      <defs><linearGradient id="ag" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${col}"/><stop offset="100%" stop-color="${shd(col)}"/></linearGradient></defs>
+      <!-- stock -->
+      <rect x="112" y="27" width="46" height="10" rx="3" fill="${shd(col)}"/>
+      <rect x="112" y="34" width="46" height="6" rx="2" fill="${shd(shd(col))}"/>
+      <!-- receiver -->
+      <rect x="52" y="22" width="64" height="20" rx="2" fill="url(#ag)"/>
+      <rect x="52" y="22" width="64" height="5" rx="1" fill="${lgt(col)}" opacity=".6"/>
+      <!-- dust cover -->
+      <rect x="58" y="24" width="40" height="6" rx="1" fill="${shd(col)}" opacity=".7"/>
+      <!-- barrel -->
+      <rect x="6" y="27" width="50" height="8" rx="2" fill="url(#ag)"/>
+      <rect x="6" y="27" width="50" height="2" fill="${lgt(col)}" opacity=".5" rx="1"/>
+      <!-- muzzle brake -->
+      <rect x="4" y="25" width="8" height="12" rx="2" fill="${shd(col)}"/>
+      <line x1="6" y1="28" x2="6" y2="34" stroke="${lgt(col)}" stroke-width="1" opacity=".5"/>
+      <!-- front sight -->
+      <rect x="20" y="23" width="4" height="6" rx="1" fill="${col}"/>
+      <!-- gas tube -->
+      <rect x="20" y="22" width="36" height="4" rx="1" fill="${shd(col)}"/>
+      <!-- handguard wood -->
+      <rect x="22" y="29" width="32" height="12" rx="2" fill="#6b4c2a"/>
+      <line x1="26" y1="30" x2="26" y2="40" stroke="rgba(0,0,0,.25)" stroke-width="1"/>
+      <line x1="30" y1="30" x2="30" y2="40" stroke="rgba(0,0,0,.25)" stroke-width="1"/>
+      <line x1="34" y1="30" x2="34" y2="40" stroke="rgba(0,0,0,.25)" stroke-width="1"/>
+      <line x1="38" y1="30" x2="38" y2="40" stroke="rgba(0,0,0,.25)" stroke-width="1"/>
+      <line x1="42" y1="30" x2="42" y2="40" stroke="rgba(0,0,0,.25)" stroke-width="1"/>
+      <line x1="46" y1="30" x2="46" y2="40" stroke="rgba(0,0,0,.25)" stroke-width="1"/>
+      <!-- pistol grip wood -->
+      <path d="M100 40 L106 62 L118 62 L112 40 Z" fill="#6b4c2a"/>
+      <line x1="104" y1="44" x2="115" y2="44" stroke="rgba(0,0,0,.25)" stroke-width="1"/>
+      <line x1="104" y1="48" x2="115" y2="48" stroke="rgba(0,0,0,.25)" stroke-width="1"/>
+      <line x1="104" y1="52" x2="115" y2="52" stroke="rgba(0,0,0,.25)" stroke-width="1"/>
+      <!-- trigger guard -->
+      <path d="M100 42 Q110 58 118 58 L118 62 L106 62 Q96 58 94 46 Z" fill="none" stroke="${col}" stroke-width="1.5"/>
+      <!-- trigger -->
+      <rect x="103" y="44" width="3" height="9" rx="1" fill="${lgt(col)}"/>
+      <!-- magazine -->
+      <path d="M72 42 Q74 62 84 62 Q94 62 96 42 Z" fill="${shd(col)}"/>
+      <rect x="74" y="44" width="20" height="3" rx="1" fill="${col}" opacity=".5"/>
+      <!-- rear sight -->
+      <rect x="108" y="21" width="8" height="4" rx="1" fill="${col}"/>
+      <rect x="111" y="21" width="2" height="4" fill="${shd(col)}"/>
+    </svg>`;
+  },
+
+  smg(col='#555'){
+    return `<svg viewBox="0 0 150 65" xmlns="http://www.w3.org/2000/svg">
+      <defs><linearGradient id="sg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${col}"/><stop offset="100%" stop-color="${shd(col)}"/></linearGradient></defs>
+      <!-- folding stock -->
+      <path d="M118 26 L142 20 L142 24 L122 30 Z" fill="${shd(col)}" stroke="${col}" stroke-width="1"/>
+      <path d="M118 32 L142 38 L142 42 L122 36 Z" fill="${shd(col)}" stroke="${col}" stroke-width="1"/>
+      <!-- receiver -->
+      <rect x="52" y="22" width="68" height="18" rx="2" fill="url(#sg)"/>
+      <rect x="52" y="22" width="68" height="4" fill="${lgt(col)}" rx="1" opacity=".5"/>
+      <!-- top rail -->
+      <rect x="58" y="20" width="56" height="4" rx="1" fill="${shd(col)}"/>
+      <line x1="64" y1="20" x2="64" y2="24" stroke="${lgt(col)}" stroke-width=".8" opacity=".4"/>
+      <line x1="70" y1="20" x2="70" y2="24" stroke="${lgt(col)}" stroke-width=".8" opacity=".4"/>
+      <line x1="76" y1="20" x2="76" y2="24" stroke="${lgt(col)}" stroke-width=".8" opacity=".4"/>
+      <line x1="82" y1="20" x2="82" y2="24" stroke="${lgt(col)}" stroke-width=".8" opacity=".4"/>
+      <line x1="88" y1="20" x2="88" y2="24" stroke="${lgt(col)}" stroke-width=".8" opacity=".4"/>
+      <line x1="94" y1="20" x2="94" y2="24" stroke="${lgt(col)}" stroke-width=".8" opacity=".4"/>
+      <line x1="100" y1="20" x2="100" y2="24" stroke="${lgt(col)}" stroke-width=".8" opacity=".4"/>
+      <!-- barrel -->
+      <rect x="10" y="26" width="44" height="6" rx="2" fill="url(#sg)"/>
+      <rect x="10" y="26" width="44" height="2" fill="${lgt(col)}" rx="1" opacity=".4"/>
+      <!-- suppressor -->
+      <rect x="6" y="24" width="10" height="10" rx="3" fill="${shd(col)}"/>
+      <line x1="8" y1="27" x2="14" y2="27" stroke="${col}" stroke-width=".8"/>
+      <line x1="8" y1="30" x2="14" y2="30" stroke="${col}" stroke-width=".8"/>
+      <line x1="8" y1="33" x2="14" y2="33" stroke="${col}" stroke-width=".8"/>
+      <!-- handguard -->
+      <rect x="22" y="26" width="32" height="10" rx="1" fill="${shd(col)}" opacity=".7"/>
+      <!-- vertical grip -->
+      <rect x="30" y="34" width="8" height="14" rx="2" fill="${shd(col)}"/>
+      <!-- pistol grip -->
+      <path d="M102 38 L108 60 L118 60 L112 38 Z" fill="${shd(col)}"/>
+      <!-- trigger guard -->
+      <path d="M102 40 Q110 56 118 56 L118 60 L108 60 Q98 56 96 44 Z" fill="none" stroke="${col}" stroke-width="1.5"/>
+      <rect x="105" y="42" width="3" height="8" rx="1" fill="${lgt(col)}"/>
+      <!-- mag (straight) -->
+      <rect x="74" y="40" width="14" height="24" rx="2" fill="${shd(col)}"/>
+      <rect x="76" y="42" width="10" height="4" rx="1" fill="${col}" opacity=".4"/>
+      <!-- charging handle -->
+      <rect x="108" y="23" width="6" height="4" rx="1" fill="${col}"/>
+      <rect x="112" y="22" width="4" height="6" rx="1" fill="${lgt(col)}"/>
+    </svg>`;
+  },
+
+  shotgun(col='#5a4a3a'){
+    return `<svg viewBox="0 0 160 60" xmlns="http://www.w3.org/2000/svg">
+      <defs><linearGradient id="shg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${col}"/><stop offset="100%" stop-color="${shd(col)}"/></linearGradient></defs>
+      <!-- stock wood -->
+      <path d="M118 24 L155 22 L155 28 L118 32 Z" fill="#6b4c2a"/>
+      <line x1="124" y1="23" x2="124" y2="31" stroke="rgba(0,0,0,.2)" stroke-width="1"/>
+      <line x1="132" y1="22" x2="132" y2="30" stroke="rgba(0,0,0,.2)" stroke-width="1"/>
+      <line x1="140" y1="22" x2="140" y2="30" stroke="rgba(0,0,0,.2)" stroke-width="1"/>
+      <line x1="148" y1="22" x2="148" y2="30" stroke="rgba(0,0,0,.2)" stroke-width="1"/>
+      <!-- receiver -->
+      <rect x="60" y="20" width="60" height="22" rx="3" fill="url(#shg)"/>
+      <rect x="60" y="20" width="60" height="5" fill="${lgt(col)}" rx="2" opacity=".5"/>
+      <!-- dual barrels -->
+      <rect x="8" y="22" width="56" height="8" rx="2" fill="url(#shg)"/>
+      <rect x="8" y="30" width="56" height="8" rx="2" fill="${shd(col)}"/>
+      <rect x="8" y="22" width="56" height="2" fill="${lgt(col)}" rx="1" opacity=".4"/>
+      <!-- barrel band -->
+      <rect x="28" y="21" width="4" height="18" rx="1" fill="${shd(col)}" opacity=".8"/>
+      <rect x="44" y="21" width="4" height="18" rx="1" fill="${shd(col)}" opacity=".8"/>
+      <!-- muzzle -->
+      <rect x="4" y="20" width="8" height="20" rx="2" fill="${shd(col)}"/>
+      <circle cx="8" cy="26" r="3" fill="#222" stroke="${col}" stroke-width="1"/>
+      <circle cx="8" cy="34" r="3" fill="#222" stroke="${col}" stroke-width="1"/>
+      <!-- pump handguard -->
+      <rect x="24" y="28" width="28" height="8" rx="2" fill="#6b4c2a"/>
+      <!-- pistol grip -->
+      <path d="M114 40 L120 58 L132 58 L126 40 Z" fill="#6b4c2a"/>
+      <line x1="117" y1="44" x2="130" y2="44" stroke="rgba(0,0,0,.25)" stroke-width="1"/>
+      <line x1="117" y1="48" x2="130" y2="48" stroke="rgba(0,0,0,.25)" stroke-width="1"/>
+      <line x1="117" y1="52" x2="130" y2="52" stroke="rgba(0,0,0,.25)" stroke-width="1"/>
+      <!-- trigger guard -->
+      <path d="M114 42 Q122 56 130 56 L130 60 Q119 60 112 48 Z" fill="none" stroke="${col}" stroke-width="1.5"/>
+      <rect x="117" y="44" width="3" height="9" rx="1" fill="${lgt(col)}"/>
+      <!-- sight bead -->
+      <circle cx="10" cy="22" r="2" fill="${lgt(col)}"/>
+    </svg>`;
+  },
+
+  sniper(col='#3a4a3a'){
+    return `<svg viewBox="0 0 180 60" xmlns="http://www.w3.org/2000/svg">
+      <defs><linearGradient id="snp" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${col}"/><stop offset="100%" stop-color="${shd(col)}"/></linearGradient></defs>
+      <!-- stock -->
+      <path d="M130 26 L170 24 L170 30 L134 34 Z" fill="${shd(col)}"/>
+      <rect x="160" y="28" width="12" height="8" rx="2" fill="${shd(shd(col))}"/>
+      <!-- cheek rest -->
+      <path d="M140 22 L162 20 L162 26 L140 28 Z" fill="${col}"/>
+      <!-- receiver -->
+      <rect x="62" y="21" width="72" height="20" rx="2" fill="url(#snp)"/>
+      <rect x="62" y="21" width="72" height="5" fill="${lgt(col)}" rx="1" opacity=".4"/>
+      <!-- scope -->
+      <rect x="70" y="13" width="52" height="10" rx="4" fill="#222" stroke="${col}" stroke-width="1.2"/>
+      <rect x="72" y="14" width="48" height="8" rx="3" fill="#1a1a2a"/>
+      <line x1="96" y1="13" x2="96" y2="23" stroke="${col}" stroke-width=".8" opacity=".6"/>
+      <circle cx="96" cy="18" r="3" fill="none" stroke="${lgt(col)}" stroke-width=".6"/>
+      <!-- scope mounts -->
+      <rect x="74" y="19" width="6" height="6" rx="1" fill="${shd(col)}"/>
+      <rect x="110" y="19" width="6" height="6" rx="1" fill="${shd(col)}"/>
+      <!-- barrel long -->
+      <rect x="6" y="27" width="60" height="7" rx="2" fill="url(#snp)"/>
+      <rect x="6" y="27" width="60" height="2" fill="${lgt(col)}" rx="1" opacity=".3"/>
+      <!-- muzzle brake -->
+      <rect x="4" y="25" width="8" height="11" rx="2" fill="${shd(col)}"/>
+      <line x1="6" y1="27" x2="6" y2="34" stroke="${lgt(col)}" stroke-width="1" opacity=".4"/>
+      <line x1="10" y1="26" x2="10" y2="35" stroke="${col}" stroke-width=".8" opacity=".3"/>
+      <!-- bipod -->
+      <line x1="28" y1="34" x2="22" y2="52" stroke="${shd(col)}" stroke-width="2"/>
+      <line x1="36" y1="34" x2="42" y2="52" stroke="${shd(col)}" stroke-width="2"/>
+      <line x1="20" y1="51" x2="24" y2="54" stroke="${col}" stroke-width="1.5"/>
+      <line x1="40" y1="51" x2="44" y2="54" stroke="${col}" stroke-width="1.5"/>
+      <!-- handguard -->
+      <rect x="20" y="27" width="44" height="10" rx="1" fill="${shd(col)}" opacity=".6"/>
+      <!-- pistol grip -->
+      <path d="M118 39 L124 58 L134 58 L128 39 Z" fill="${shd(col)}"/>
+      <line x1="121" y1="43" x2="132" y2="43" stroke="rgba(0,0,0,.25)" stroke-width="1"/>
+      <line x1="121" y1="47" x2="132" y2="47" stroke="rgba(0,0,0,.25)" stroke-width="1"/>
+      <line x1="121" y1="51" x2="132" y2="51" stroke="rgba(0,0,0,.25)" stroke-width="1"/>
+      <!-- trigger guard -->
+      <path d="M118 42 Q126 56 134 56 L134 60 L122 60 Q114 56 112 46 Z" fill="none" stroke="${col}" stroke-width="1.5"/>
+      <rect x="121" y="44" width="3" height="9" rx="1" fill="${lgt(col)}"/>
+      <!-- bolt handle -->
+      <rect x="128" y="21" width="3" height="8" rx="1" fill="${col}"/>
+      <circle cx="129" cy="30" r="2" fill="${lgt(col)}"/>
+      <!-- magazine -->
+      <rect x="94" y="41" width="12" height="16" rx="2" fill="${shd(col)}"/>
+    </svg>`;
+  },
+
+  knife(col='#aaa',blade='#d0d0d0'){
+    return `<svg viewBox="0 0 130 55" xmlns="http://www.w3.org/2000/svg">
+      <defs><linearGradient id="kg" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="${blade}"/><stop offset="100%" stop-color="${col}"/></linearGradient>
+      <linearGradient id="kg2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${lgt(blade)}"/><stop offset="60%" stop-color="${blade}"/><stop offset="100%" stop-color="${shd(blade)}"/></linearGradient></defs>
+      <!-- blade -->
+      <path d="M8 28 L92 18 L92 32 L8 32 Z" fill="url(#kg2)"/>
+      <!-- edge highlight -->
+      <path d="M8 28 L92 18 L90 22 L10 28 Z" fill="${lgt(blade)}" opacity=".6"/>
+      <!-- fuller groove -->
+      <path d="M20 26 L80 20 L80 22 L20 28 Z" fill="${shd(blade)}" opacity=".4"/>
+      <!-- blade tip -->
+      <path d="M88 18 L108 25 L88 32 Z" fill="url(#kg)"/>
+      <path d="M88 18 L108 25 L95 22 Z" fill="${lgt(blade)}" opacity=".5"/>
+      <!-- guard -->
+      <rect x="88" y="16" width="6" height="22" rx="2" fill="${shd(col)}"/>
+      <rect x="88" y="16" width="6" height="4" rx="1" fill="${lgt(col)}"/>
+      <!-- handle -->
+      <rect x="92" y="20" width="30" height="14" rx="3" fill="${shd(col)}"/>
+      <!-- grip wrapping -->
+      <line x1="96" y1="20" x2="96" y2="34" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/>
+      <line x1="100" y1="20" x2="100" y2="34" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/>
+      <line x1="104" y1="20" x2="104" y2="34" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/>
+      <line x1="108" y1="20" x2="108" y2="34" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/>
+      <line x1="112" y1="20" x2="112" y2="34" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/>
+      <line x1="116" y1="20" x2="116" y2="34" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/>
+      <!-- pommel -->
+      <ellipse cx="122" cy="27" rx="5" ry="8" fill="${shd(col)}"/>
+      <ellipse cx="122" cy="27" rx="3" ry="5" fill="${col}" opacity=".5"/>
+    </svg>`;
+  },
+
+  goldrevolver(col='#d4a800'){
+    return `<svg viewBox="0 0 140 80" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="grg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#f8d060"/><stop offset="50%" stop-color="${col}"/><stop offset="100%" stop-color="#8a6800"/></linearGradient>
+        <filter id="glow-g"><feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      </defs>
+      <!-- engrave bg lines -->
+      <line x1="10" y1="28" x2="110" y2="28" stroke="rgba(248,208,96,.08)" stroke-width="4"/>
+      <!-- barrel long -->
+      <rect x="6" y="25" width="66" height="13" rx="3" fill="url(#grg)" filter="url(#glow-g)"/>
+      <rect x="6" y="25" width="66" height="3" fill="#f8d060" rx="1" opacity=".7"/>
+      <!-- barrel engrave lines -->
+      <line x1="20" y1="26" x2="20" y2="37" stroke="rgba(255,255,255,.15)" stroke-width="1"/>
+      <line x1="32" y1="26" x2="32" y2="37" stroke="rgba(255,255,255,.15)" stroke-width="1"/>
+      <line x1="44" y1="26" x2="44" y2="37" stroke="rgba(255,255,255,.15)" stroke-width="1"/>
+      <line x1="56" y1="26" x2="56" y2="37" stroke="rgba(255,255,255,.15)" stroke-width="1"/>
+      <!-- cylinder gold -->
+      <circle cx="82" cy="34" r="20" fill="#8a6800" stroke="url(#grg)" stroke-width="2" filter="url(#glow-g)"/>
+      <circle cx="82" cy="34" r="16" fill="url(#grg)" opacity=".5"/>
+      <!-- chamber circles -->
+      <circle cx="82" cy="18" r="5" fill="#222" stroke="#f8d060" stroke-width="1.2"/>
+      <circle cx="95" cy="25" r="5" fill="#222" stroke="#f8d060" stroke-width="1.2"/>
+      <circle cx="95" cy="43" r="5" fill="#222" stroke="#f8d060" stroke-width="1.2"/>
+      <circle cx="82" cy="50" r="5" fill="#222" stroke="#f8d060" stroke-width="1.2"/>
+      <circle cx="69" cy="43" r="5" fill="#222" stroke="#f8d060" stroke-width="1.2"/>
+      <circle cx="69" cy="25" r="5" fill="#222" stroke="#f8d060" stroke-width="1.2"/>
+      <circle cx="82" cy="34" r="4" fill="#f8d060" opacity=".8"/>
+      <!-- frame -->
+      <path d="M68 34 L68 38 L84 54 L96 54 L96 38 Z" fill="#8a6800" opacity=".4"/>
+      <!-- grip -->
+      <path d="M94 44 L102 72 L116 72 L108 44 Z" fill="#5a3800"/>
+      <path d="M96 48 L99 70 L114 70 L111 48 Z" fill="rgba(248,208,96,.12)"/>
+      <!-- grip inlay pattern -->
+      <line x1="97" y1="52" x2="112" y2="52" stroke="rgba(248,208,96,.2)" stroke-width="1"/>
+      <line x1="97" y1="56" x2="112" y2="56" stroke="rgba(248,208,96,.2)" stroke-width="1"/>
+      <line x1="97" y1="60" x2="112" y2="60" stroke="rgba(248,208,96,.2)" stroke-width="1"/>
+      <line x1="97" y1="64" x2="112" y2="64" stroke="rgba(248,208,96,.2)" stroke-width="1"/>
+      <!-- hammer -->
+      <rect x="98" y="34" width="7" height="12" rx="2" fill="url(#grg)"/>
+      <rect x="99" y="30" width="6" height="7" rx="1" fill="#f8d060" opacity=".8"/>
+      <!-- trigger guard gold -->
+      <path d="M94 48 Q104 64 112 64 L112 68 Q100 68 92 52 Z" fill="none" stroke="url(#grg)" stroke-width="2"/>
+      <rect x="97" y="50" width="4" height="10" rx="2" fill="#f8d060" opacity=".9"/>
+      <!-- sight -->
+      <rect x="8" y="23" width="5" height="5" rx="1" fill="#f8d060" filter="url(#glow-g)"/>
+      <!-- glow pulse hint -->
+      <circle cx="82" cy="34" r="22" fill="none" stroke="rgba(248,208,96,.12)" stroke-width="2"/>
+    </svg>`;
+  },
+
+  // ── Armor / misc visuals ─────────────────────────────────────
+  vest(col='#3a4a5a'){
+    return `<svg viewBox="0 0 100 90" xmlns="http://www.w3.org/2000/svg">
+      <defs><linearGradient id="vg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${col}"/><stop offset="100%" stop-color="${shd(col)}"/></linearGradient></defs>
+      <!-- main vest shape -->
+      <path d="M20 10 L50 6 L80 10 L85 70 L50 76 L15 70 Z" fill="url(#vg)" stroke="${lgt(col)}" stroke-width="1"/>
+      <!-- chest plate left -->
+      <rect x="22" y="20" width="24" height="32" rx="3" fill="${shd(col)}" stroke="${lgt(col)}" stroke-width=".8"/>
+      <!-- chest plate right -->
+      <rect x="54" y="20" width="24" height="32" rx="3" fill="${shd(col)}" stroke="${lgt(col)}" stroke-width=".8"/>
+      <!-- center zip/strap -->
+      <rect x="47" y="8" width="6" height="66" fill="${shd(col)}" opacity=".6"/>
+      <line x1="50" y1="10" x2="50" y2="72" stroke="${lgt(col)}" stroke-width=".8" opacity=".4"/>
+      <!-- shoulder straps -->
+      <path d="M20 10 L28 6 L34 18 L24 22 Z" fill="${shd(col)}"/>
+      <path d="M80 10 L72 6 L66 18 L76 22 Z" fill="${shd(col)}"/>
+      <!-- MOLLE webbing -->
+      <rect x="24" y="24" width="20" height="4" rx="1" fill="${lgt(col)}" opacity=".3"/>
+      <rect x="24" y="30" width="20" height="4" rx="1" fill="${lgt(col)}" opacity=".3"/>
+      <rect x="24" y="36" width="20" height="4" rx="1" fill="${lgt(col)}" opacity=".3"/>
+      <rect x="56" y="24" width="20" height="4" rx="1" fill="${lgt(col)}" opacity=".3"/>
+      <rect x="56" y="30" width="20" height="4" rx="1" fill="${lgt(col)}" opacity=".3"/>
+      <rect x="56" y="36" width="20" height="4" rx="1" fill="${lgt(col)}" opacity=".3"/>
+      <!-- pouch -->
+      <rect x="30" y="54" width="14" height="12" rx="2" fill="${col}"/>
+      <rect x="56" y="54" width="14" height="12" rx="2" fill="${col}"/>
+      <!-- level label -->
+      <text x="50" y="50" text-anchor="middle" font-size="8" fill="${lgt(col)}" font-family="monospace" opacity=".7">LEVEL IV</text>
+    </svg>`;
+  },
+
+  helmet(col='#3a4050'){
+    return `<svg viewBox="0 0 90 85" xmlns="http://www.w3.org/2000/svg">
+      <defs><linearGradient id="hg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${lgt(col)}"/><stop offset="100%" stop-color="${shd(col)}"/></linearGradient></defs>
+      <!-- shell -->
+      <path d="M15 50 Q15 14 45 12 Q75 14 75 50 L70 58 L20 58 Z" fill="url(#hg)" stroke="${lgt(col)}" stroke-width="1"/>
+      <!-- highlight -->
+      <path d="M22 44 Q22 20 45 18 Q60 18 66 28" fill="none" stroke="${lgt(col)}" stroke-width="2" opacity=".3" stroke-linecap="round"/>
+      <!-- chin strap -->
+      <path d="M20 56 L16 72 L24 74 L28 60 Z" fill="${shd(col)}"/>
+      <path d="M70 56 L74 72 L66 74 L62 60 Z" fill="${shd(col)}"/>
+      <rect x="34" y="72" width="22" height="5" rx="2" fill="${shd(col)}"/>
+      <!-- rail -->
+      <rect x="22" y="30" width="46" height="6" rx="2" fill="${shd(col)}" stroke="${col}" stroke-width=".8"/>
+      <line x1="28" y1="30" x2="28" y2="36" stroke="${lgt(col)}" stroke-width=".8" opacity=".4"/>
+      <line x1="34" y1="30" x2="34" y2="36" stroke="${lgt(col)}" stroke-width=".8" opacity=".4"/>
+      <line x1="40" y1="30" x2="40" y2="36" stroke="${lgt(col)}" stroke-width=".8" opacity=".4"/>
+      <line x1="46" y1="30" x2="46" y2="36" stroke="${lgt(col)}" stroke-width=".8" opacity=".4"/>
+      <line x1="52" y1="30" x2="52" y2="36" stroke="${lgt(col)}" stroke-width=".8" opacity=".4"/>
+      <line x1="58" y1="30" x2="58" y2="36" stroke="${lgt(col)}" stroke-width=".8" opacity=".4"/>
+      <!-- visor mounting -->
+      <rect x="18" y="48" width="54" height="6" rx="1" fill="${shd(col)}" opacity=".8"/>
+      <!-- IR patch -->
+      <rect x="42" y="14" width="6" height="5" rx="1" fill="rgba(60,186,110,.4)" stroke="${lgt(col)}" stroke-width=".5"/>
+    </svg>`;
+  },
+
+  jacket(col='#3a2a1a'){
+    return `<svg viewBox="0 0 100 90" xmlns="http://www.w3.org/2000/svg">
+      <defs><linearGradient id="jg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${lgt(col)}"/><stop offset="100%" stop-color="${shd(col)}"/></linearGradient></defs>
+      <!-- body -->
+      <path d="M18 14 L50 8 L82 14 L88 78 L50 82 L12 78 Z" fill="url(#jg)"/>
+      <!-- lapels -->
+      <path d="M18 14 L50 24 L38 46 L14 36 Z" fill="${shd(col)}"/>
+      <path d="M82 14 L50 24 L62 46 L86 36 Z" fill="${shd(col)}"/>
+      <!-- collar -->
+      <path d="M34 8 L50 8 L66 8 L50 18 Z" fill="${shd(col)}"/>
+      <!-- buttons -->
+      <circle cx="50" cy="34" r="2.5" fill="${lgt(col)}" stroke="${shd(col)}" stroke-width=".5"/>
+      <circle cx="50" cy="44" r="2.5" fill="${lgt(col)}" stroke="${shd(col)}" stroke-width=".5"/>
+      <circle cx="50" cy="54" r="2.5" fill="${lgt(col)}" stroke="${shd(col)}" stroke-width=".5"/>
+      <circle cx="50" cy="64" r="2.5" fill="${lgt(col)}" stroke="${shd(col)}" stroke-width=".5"/>
+      <!-- sleeve seam -->
+      <line x1="18" y1="14" x2="12" y2="50" stroke="${shd(shd(col))}" stroke-width="1.5"/>
+      <line x1="82" y1="14" x2="88" y2="50" stroke="${shd(shd(col))}" stroke-width="1.5"/>
+      <!-- pocket -->
+      <rect x="20" y="52" width="18" height="14" rx="2" fill="${shd(col)}" stroke="${lgt(col)}" stroke-width=".5"/>
+      <rect x="62" y="52" width="18" height="14" rx="2" fill="${shd(col)}" stroke="${lgt(col)}" stroke-width=".5"/>
+      <!-- stitch lines -->
+      <line x1="28" y1="52" x2="28" y2="66" stroke="${lgt(col)}" stroke-width=".5" opacity=".3"/>
+      <line x1="70" y1="52" x2="70" y2="66" stroke="${lgt(col)}" stroke-width=".5" opacity=".3"/>
+    </svg>`;
+  },
+
+  // generic pill / drug
+  pill(color='#e03c3c'){
+    return `<svg viewBox="0 0 90 60" xmlns="http://www.w3.org/2000/svg">
+      <defs><linearGradient id="plg" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="${color}"/><stop offset="50%" stop-color="${color}" stop-opacity=".9"/><stop offset="50.01%" stop-color="#eee"/><stop offset="100%" stop-color="#ccc"/></linearGradient></defs>
+      <!-- capsule -->
+      <rect x="14" y="18" width="62" height="24" rx="12" fill="url(#plg)" stroke="rgba(0,0,0,.3)" stroke-width="1"/>
+      <!-- highlight -->
+      <ellipse cx="30" cy="24" rx="10" ry="5" fill="rgba(255,255,255,.25)"/>
+      <!-- seam line -->
+      <line x1="45" y1="18" x2="45" y2="42" stroke="rgba(0,0,0,.2)" stroke-width="1"/>
+    </svg>`;
+  },
+
+  syringe(){
+    return `<svg viewBox="0 0 130 55" xmlns="http://www.w3.org/2000/svg">
+      <!-- needle -->
+      <line x1="8" y1="28" x2="28" y2="28" stroke="#ccc" stroke-width="2"/>
+      <path d="M26 24 L34 28 L26 32 Z" fill="#bbb"/>
+      <!-- barrel -->
+      <rect x="32" y="20" width="64" height="16" rx="3" fill="rgba(220,240,255,0.85)" stroke="#aaa" stroke-width="1"/>
+      <!-- liquid fill -->
+      <rect x="34" y="22" width="38" height="12" rx="2" fill="rgba(60,186,110,0.5)"/>
+      <!-- scale marks -->
+      <line x1="48" y1="20" x2="48" y2="26" stroke="#888" stroke-width=".8"/>
+      <line x1="58" y1="20" x2="58" y2="26" stroke="#888" stroke-width=".8"/>
+      <line x1="68" y1="20" x2="68" y2="26" stroke="#888" stroke-width=".8"/>
+      <!-- plunger rod -->
+      <rect x="94" y="26" width="26" height="4" rx="1" fill="#aaa"/>
+      <!-- plunger handle -->
+      <rect x="116" y="18" width="8" height="20" rx="2" fill="#999"/>
+      <!-- cap ring -->
+      <rect x="92" y="19" width="6" height="18" rx="1" fill="#888"/>
+    </svg>`;
+  },
+
+  // Generic box item
+  box(color='#4a5a6a', label='ITEM'){
+    return `<svg viewBox="0 0 80 70" xmlns="http://www.w3.org/2000/svg">
+      <defs><linearGradient id="boxg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${lgt(color)}"/><stop offset="100%" stop-color="${shd(color)}"/></linearGradient></defs>
+      <rect x="12" y="22" width="56" height="40" rx="3" fill="url(#boxg)" stroke="${lgt(color)}" stroke-width="1"/>
+      <rect x="12" y="22" width="56" height="10" rx="3" fill="${shd(color)}"/>
+      <rect x="12" y="28" width="56" height="4" fill="${shd(color)}" opacity=".5"/>
+      <rect x="34" y="14" width="12" height="12" rx="2" fill="${color}"/>
+      <text x="40" y="50" text-anchor="middle" font-size="9" fill="${lgt(color)}" font-family="monospace">${label}</text>
+    </svg>`;
+  },
+
+  diamond(){
+    return `<svg viewBox="0 0 90 80" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="dmd" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#a0e8ff"/><stop offset="50%" stop-color="#60c0ff"/><stop offset="100%" stop-color="#1890ff"/></linearGradient>
+        <filter id="df"><feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      </defs>
+      <!-- girdle -->
+      <polygon points="45,8 76,30 66,66 24,66 14,30" fill="url(#dmd)" stroke="rgba(255,255,255,.4)" stroke-width="1" filter="url(#df)"/>
+      <!-- table -->
+      <polygon points="45,14 68,28 62,28 45,16 28,28 22,28" fill="rgba(255,255,255,.3)"/>
+      <!-- facets -->
+      <line x1="45" y1="8" x2="45" y2="66" stroke="rgba(255,255,255,.15)" stroke-width="1"/>
+      <line x1="14" y1="30" x2="76" y2="30" stroke="rgba(255,255,255,.15)" stroke-width="1"/>
+      <line x1="45" y1="8" x2="14" y2="30" stroke="rgba(255,255,255,.2)" stroke-width=".8"/>
+      <line x1="45" y1="8" x2="76" y2="30" stroke="rgba(255,255,255,.2)" stroke-width=".8"/>
+      <line x1="14" y1="30" x2="24" y2="66" stroke="rgba(255,255,255,.15)" stroke-width=".8"/>
+      <line x1="76" y1="30" x2="66" y2="66" stroke="rgba(255,255,255,.15)" stroke-width=".8"/>
+      <!-- sparkles -->
+      <circle cx="60" cy="20" r="2" fill="white" opacity=".8"/>
+      <circle cx="30" cy="18" r="1.5" fill="white" opacity=".6"/>
+      <circle cx="70" cy="38" r="1" fill="white" opacity=".5"/>
+    </svg>`;
+  },
+};
+
+// helpers
+function lgt(hex){ return blendHex(hex,'#ffffff',0.28); }
+function shd(hex){ return blendHex(hex,'#000000',0.38); }
+function blendHex(hex,mix,t){
+  hex=hex.replace('#',''); mix=mix.replace('#','');
+  if(hex.length<6) return '#'+hex;
+  const [r1,g1,b1]=[parseInt(hex.slice(0,2),16),parseInt(hex.slice(2,4),16),parseInt(hex.slice(4,6),16)];
+  const [r2,g2,b2]=[parseInt(mix.slice(0,2),16),parseInt(mix.slice(2,4),16),parseInt(mix.slice(4,6),16)];
+  const r=Math.round(r1*(1-t)+r2*t),g=Math.round(g1*(1-t)+g2*t),b=Math.round(b1*(1-t)+b2*t);
+  return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ITEM DATA
+// ═══════════════════════════════════════════════════════════════
+const rarityRank={C:0,U:1,R:2,E:3,L:4};
+const rarityCol={C:'var(--r-common)',U:'var(--r-uncommon)',R:'var(--r-rare)',E:'var(--r-epic)',L:'var(--r-legendary)'};
+const rarityName={C:'Common',U:'Uncommon',R:'Rare',E:'Epic',L:'Legendary'};
+const rarityGlow={C:'rgba(122,122,144,.12)',U:'rgba(60,186,110,.14)',R:'rgba(74,144,217,.15)',E:'rgba(168,85,247,.15)',L:'rgba(201,168,76,.18)'};
+
+let ITEMS = [
+  // ── WEAPONS ───────────────────────────────────────────────────
+  { id:1,  name:'Switchblade',      type:'weapon', rarity:'C', qty:2,  atk:18,  def:0, spd:+12, sellPrice:400,   desc:'Quick to deploy, easy to conceal. Blade snaps open with a flick. Basic but reliable in a pinch.', svg:()=>SVG.knife('#aaa','#d0d0d0'), equipped:false },
+  { id:2,  name:'Hunting Knife',    type:'weapon', rarity:'U', qty:1,  atk:32,  def:0, spd:+8,  sellPrice:1200,  desc:'Heavy fixed-blade knife with a serrated spine. Cuts through most materials with ease.', svg:()=>SVG.knife('#8a7060','#c8b090'), equipped:false },
+  { id:3,  name:'Combat Knife',     type:'weapon', rarity:'R', qty:1,  atk:48,  def:0, spd:+10, sellPrice:3400,  desc:'Military-grade tanto blade. Engineered for combat — balances penetration with speed.', svg:()=>SVG.knife('#4a6070','#90b0c0'), equipped:false },
+  { id:4,  name:'9mm Pistol',       type:'weapon', rarity:'C', qty:1,  atk:24,  def:0, spd:-2,  sellPrice:800,   desc:'Standard-issue handgun. Reliable, cheap, and easy to reload. Every criminal starts here.', svg:()=>SVG.pistol('#777','rgba(255,255,255,.07)','#666'), equipped:false },
+  { id:5,  name:'Glock 17',         type:'weapon', rarity:'U', qty:1,  atk:38,  def:0, spd:0,   sellPrice:2200,  desc:'Polymer frame, 17-round magazine. The most used handgun in the world for a reason.', svg:()=>SVG.pistol('#555','rgba(255,255,255,.08)','#777'), equipped:false },
+  { id:6,  name:'Beretta M9',       type:'weapon', rarity:'U', qty:1,  atk:42,  def:0, spd:-2,  sellPrice:2800,  desc:'Full-metal frame with open-slide design. Superior accuracy at close-to-medium range.', svg:()=>SVG.pistol('#8a8a90','rgba(200,200,255,.06)','#999'), equipped:false },
+  { id:7,  name:'Desert Eagle',     type:'weapon', rarity:'E', qty:1,  atk:85,  def:0, spd:-5,  sellPrice:9800,  desc:'A hand cannon. Fires .50 AE rounds that stop targets cold. Heavy, loud, and devastating.', svg:()=>SVG.deagle('#c0a060'), equipped:true, slot:'weapon' },
+  { id:8,  name:'Colt Python',      type:'weapon', rarity:'R', qty:1,  atk:62,  def:0, spd:-4,  sellPrice:5500,  desc:'The pinnacle of revolver craftsmanship. Smooth double-action, legendary accuracy.', svg:()=>SVG.revolver('#7a7a8a'), equipped:false },
+  { id:9,  name:'Smith & Wesson',   type:'weapon', rarity:'U', qty:1,  atk:44,  def:0, spd:-3,  sellPrice:3100,  desc:'Classic .357 revolver. Six shots of raw stopping power. Timeless and dependable.', svg:()=>SVG.revolver('#666'), equipped:false },
+  { id:10, name:'Sawn-Off Shotgun', type:'weapon', rarity:'R', qty:1,  atk:60,  def:0, spd:-12, sellPrice:5400,  desc:'Brutal stopping power at close range. Illegal modifications make it concealable but unpredictable.', svg:()=>SVG.shotgun('#5a4a3a'), equipped:false },
+  { id:11, name:'SPAS-12',          type:'weapon', rarity:'E', qty:1,  atk:82,  def:0, spd:-14, sellPrice:11000, desc:'Combat shotgun capable of semi-auto fire. Destroys anything within 15 meters. No mercy.', svg:()=>SVG.shotgun('#3a3020'), equipped:false },
+  { id:12, name:'MP5',              type:'weapon', rarity:'R', qty:1,  atk:58,  def:0, spd:-5,  sellPrice:6200,  desc:'The gold standard of submachine guns. Fast, compact, controllable. Preferred by special forces worldwide.', svg:()=>SVG.smg('#505050'), equipped:false },
+  { id:13, name:'Uzi',              type:'weapon', rarity:'U', qty:1,  atk:46,  def:0, spd:-4,  sellPrice:3800,  desc:'Iconic Israeli SMG. High fire rate, tight grouping. Synonymous with organized crime.', svg:()=>SVG.smg('#666'), equipped:false },
+  { id:14, name:'AK-74',            type:'weapon', rarity:'R', qty:1,  atk:72,  def:0, spd:-8,  sellPrice:7200,  desc:'The modern AK. Lighter and more accurate than its predecessor. Reliable in every condition.', svg:()=>SVG.ak47('#7a6244'), equipped:false },
+  { id:15, name:'M4 Carbine',       type:'weapon', rarity:'E', qty:1,  atk:88,  def:0, spd:-6,  sellPrice:13500, desc:'The rifle of choice for US military and operators worldwide. Modular, precise, lethal.', svg:()=>SVG.ak47('#3a4a3a'), equipped:false },
+  { id:16, name:'Dragunov SVD',     type:'weapon', rarity:'E', qty:1,  atk:95,  def:0, spd:-10, sellPrice:18000, desc:'Soviet precision rifle. Designed for designated marksmen. One shot changes the battlefield.', svg:()=>SVG.sniper('#3a4040'), equipped:false },
+  { id:17, name:'Barrett M82',      type:'weapon', rarity:'L', qty:1,  atk:130, def:0, spd:-18, sellPrice:45000, desc:'Anti-materiel rifle that fires .50 BMG rounds. Penetrates armoured vehicles. Overkill is an understatement.', svg:()=>SVG.sniper('#2a3028'), equipped:false },
+  { id:18, name:'Golden Revolver',  type:'weapon', rarity:'L', qty:1,  atk:120, def:0, spd:+5,  sellPrice:90000, desc:'Forged in 24-carat gold, engraved by hand. A symbol of absolute dominance. Only one exists in the city.', svg:()=>SVG.goldrevolver('#d4a800'), equipped:false },
+
+  // ── ARMOR ─────────────────────────────────────────────────────
+  { id:20, name:'Leather Jacket',   type:'armor',  rarity:'C', qty:1,  atk:0, def:18, spd:+4,  sellPrice:600,   desc:'Tough hide that absorbs minor impacts and scrapes. More style than protection, but better than nothing.', svg:()=>SVG.jacket('#3a2a1a'), equipped:false },
+  { id:21, name:'Tactical Vest',    type:'armor',  rarity:'U', qty:1,  atk:0, def:34, spd:0,   sellPrice:2400,  desc:'Lightweight carrier plate for soft armour inserts. Balances protection with mobility.', svg:()=>SVG.vest('#3a4a5a'), equipped:false },
+  { id:22, name:'Kevlar Vest',      type:'armor',  rarity:'R', qty:1,  atk:0, def:55, spd:-6,  sellPrice:4800,  desc:'NIJ Level IIIA rated. Stops most handgun rounds cold. Standard issue for serious operators.', svg:()=>SVG.vest('#2a3a4a'), equipped:true, slot:'armor' },
+  { id:23, name:'Tactical Helmet',  type:'armor',  rarity:'U', qty:1,  atk:0, def:28, spd:-2,  sellPrice:2200,  desc:'Ballistic helmet rated for fragmentation. Essential head protection in hostile environments.', svg:()=>SVG.helmet('#3a4050'), equipped:false },
+  { id:24, name:'MICH Helmet',      type:'armor',  rarity:'R', qty:1,  atk:0, def:40, spd:-4,  sellPrice:4100,  desc:'Modular Integrated Communications Helmet. Rail system supports NVGs and accessories.', svg:()=>SVG.helmet('#2a3040'), equipped:false },
+  { id:25, name:'Shadow Armour',    type:'armor',  rarity:'E', qty:1,  atk:0, def:90, spd:+10, sellPrice:22000, desc:'Experimental ceramic-nanotube composite. Rated Level IV+. Lighter than Kevlar, harder than steel.', svg:()=>SVG.vest('#1a2a3a'), equipped:false },
+  { id:26, name:'Dragon Skin',      type:'armor',  rarity:'L', qty:1,  atk:0, def:140,spd:-8,  sellPrice:68000, desc:'Military prototype overlapping disc armour. Banned from standard issue for being too heavy. You don\'t care.', svg:()=>SVG.vest('#1a1a2a'), equipped:false },
+
+  // ── DRUGS ─────────────────────────────────────────────────────
+  { id:30, name:'Xanax',           type:'drug',   rarity:'C', qty:8,  atk:0, def:0, spd:0,   sellPrice:200,   desc:'Takes the edge off. Restores 30 Happy. Low addiction risk. The everyday staple of underworld life.', happy:30, addiction:'Low',    svg:()=>SVG.pill('#4a90d9'), equipped:false },
+  { id:31, name:'Vicodin',         type:'drug',   rarity:'U', qty:3,  atk:0, def:0, spd:0,   sellPrice:950,   desc:'Powerful painkiller. Restores 50 HP. The good stuff. Medium addiction risk — don\'t make a habit of it.', hp:50, addiction:'Medium', svg:()=>SVG.pill('#a855f7'), equipped:false },
+  { id:32, name:'Adrenaline Shot', type:'drug',   rarity:'U', qty:4,  atk:20,def:0, spd:+30, sellPrice:800,   desc:'Floods your system with raw energy. +20 ATK, +30 SPD for 10 minutes. Crash is brutal.', duration:'10 min', addiction:'Low',    svg:()=>SVG.syringe(), equipped:false },
+  { id:33, name:'Steroids',        type:'drug',   rarity:'R', qty:2,  atk:45,def:15,spd:-10, sellPrice:3200,  desc:'Heavy-duty muscle amplification. +45 ATK, +15 DEF, -10 SPD. Duration 20 min. Medium addiction risk.', duration:'20 min', addiction:'Medium', svg:()=>SVG.pill('#e03c3c'), equipped:false },
+  { id:34, name:'Ecstasy',         type:'drug',   rarity:'R', qty:1,  atk:0, def:0, spd:+50, sellPrice:2800,  desc:'Euphoric rush. +50 SPD, +80 Happy for 15 minutes. High addiction risk. Withdrawal is savage.', duration:'15 min', happy:80, addiction:'High', svg:()=>SVG.pill('#f97316'), equipped:false },
+  { id:35, name:'Morphine',        type:'drug',   rarity:'E', qty:1,  atk:0, def:0, spd:0,   sellPrice:6500,  desc:'Hospital-grade pain suppressor. Restores full HP, eliminates hospital time penalty. Extreme addiction risk.', hp:100, addiction:'Extreme', svg:()=>SVG.syringe(), equipped:false },
+
+  // ── CONSUMABLES ───────────────────────────────────────────────
+  { id:40, name:'Energy Drink',    type:'consumable',rarity:'C', qty:12, atk:0, def:0, spd:0, sellPrice:150, desc:'Restores 25 Energy instantly. Cheap, stackable, and available at every corner store.', energy:25, svg:()=>SVG.box('#2a4a2a','NRG'), equipped:false },
+  { id:41, name:'First Aid Kit',   type:'consumable',rarity:'U', qty:3,  atk:0, def:0, spd:0, sellPrice:600, desc:'Restores 60 HP outside combat. Bandages, antiseptic, sutures. The basics done right.', hp:60, svg:()=>SVG.box('#4a2a2a','MED'), equipped:false },
+  { id:42, name:'Lockpick Set',    type:'consumable',rarity:'U', qty:2,  atk:0, def:0, spd:0, sellPrice:1100, desc:'Used to escape from jail. 70% success rate per pick. Each use consumes one pick from the set.', svg:()=>SVG.box('#2a3a4a','PICK'), equipped:false },
+  { id:43, name:'Smoke Grenade',   type:'consumable',rarity:'R', qty:1,  atk:0, def:0, spd:+40, sellPrice:2400, desc:'Throw mid-combat to escape a losing fight. Creates cover, breaks target lock. One use only.', svg:()=>SVG.box('#3a4a2a','SMK'), equipped:false },
+  { id:44, name:'Flash Bang',      type:'consumable',rarity:'R', qty:2,  atk:0, def:0, spd:0, sellPrice:1800, desc:'Blinds and disorients target for 2 combat rounds. Massive tactical advantage when timed right.', svg:()=>SVG.box('#4a4a2a','FLSH'), equipped:false },
+
+  // ── MISC ──────────────────────────────────────────────────────
+  { id:50, name:'Burner Phone',    type:'misc',   rarity:'C', qty:3,  atk:0, def:0, spd:0, sellPrice:300,   desc:'Untraceable prepaid device. Required for anonymous black market dealings and certain missions.', svg:()=>SVG.box('#3a3a3a','TEL'), equipped:false },
+  { id:51, name:'Forged Passport', type:'misc',   rarity:'R', qty:1,  atk:0, def:0, spd:0, sellPrice:6500,  desc:'High-quality forgery allowing travel to restricted cities. Unlocks Tokyo, Dubai, and Moscow operations.', svg:()=>SVG.box('#2a3a4a','PASS'), equipped:false },
+  { id:52, name:'Blood Diamond',   type:'misc',   rarity:'L', qty:1,  atk:0, def:0, spd:0, sellPrice:85000, desc:'Stolen from an overseas vault. Worth a fortune on the black market. Handle with extreme discretion.', svg:()=>SVG.diamond(), equipped:false },
+];
+
+// ═══════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════
+let equipped = {
+  weapon: ITEMS.find(i=>i.slot==='weapon')||null,
+  armor:  ITEMS.find(i=>i.slot==='armor')||null,
+};
+let selectedId = null;
+let filterType = 'all';
+let filterRar  = 'all';
+let sellQty    = 1;
+let cash       = 24850;
+
+// ═══════════════════════════════════════════════════════════════
+// EQUIP SUMMARY BAR
+// ═══════════════════════════════════════════════════════════════
+function renderEquipBar(){
+  const bar = document.getElementById('equip-bar');
+  const slots = [
+    {key:'weapon', label:'WEAPON', empty:'🔫'},
+    {key:'armor',  label:'ARMOR',  empty:'🛡️'},
+  ];
+  bar.innerHTML = slots.map(s => {
+    const it = equipped[s.key];
+    const svgHtml = it ? `<div style="width:48px;height:36px;display:flex;align-items:center;justify-content:center">${it.svg()}</div>` : `<div style="font-size:20px;opacity:.4">${s.empty}</div>`;
+    return `<div class="equip-slot ${it?'filled':''}" onclick="${it?`selectItem(${it.id})`:''}">
+      <div class="es-icon">${svgHtml}</div>
+      <div>
+        <div class="es-label">${s.label}</div>
+        <div class="es-name">${it ? it.name : '<span style="color:var(--muted)">Empty</span>'}</div>
+        ${it ? `<div class="es-bonus">${it.atk?'+'+it.atk+' ATK':''} ${it.def?'+'+it.def+' DEF':''}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// GRID RENDER
+// ═══════════════════════════════════════════════════════════════
+function render(){
+  const grid   = document.getElementById('inv-grid');
+  const search = document.getElementById('search').value.toLowerCase();
+  const sort   = document.getElementById('sort-sel').value;
+
+  let filtered = ITEMS.filter(i => {
+    if(filterType !== 'all' && i.type !== filterType) return false;
+    if(filterRar  !== 'all' && i.rarity !== filterRar) return false;
+    if(search && !i.name.toLowerCase().includes(search)) return false;
+    return true;
+  });
+
+  filtered.sort((a,b) => {
+    if(sort==='rarity') return rarityRank[b.rarity]-rarityRank[a.rarity];
+    if(sort==='name')   return a.name.localeCompare(b.name);
+    if(sort==='atk')    return (b.atk||0)-(a.atk||0);
+    if(sort==='value')  return b.sellPrice-a.sellPrice;
+    return 0;
+  });
+
+  document.getElementById('inv-sub').textContent = `${ITEMS.length} items · ${filtered.length} shown`;
+
+  if(!filtered.length){
+    grid.innerHTML = `<div class="no-results"><div class="no-results-icon">🔍</div>No items match</div>`;
+    return;
+  }
+
+  // group by type when showing all
+  let html = '';
+  if(filterType === 'all'){
+    const groups = [
+      {key:'weapon',     label:'WEAPONS'},
+      {key:'armor',      label:'ARMOR'},
+      {key:'drug',       label:'DRUGS'},
+      {key:'consumable', label:'CONSUMABLES'},
+      {key:'misc',       label:'MISC'},
+    ];
+    groups.forEach(g => {
+      const grp = filtered.filter(i=>i.type===g.key);
+      if(!grp.length) return;
+      html += `<div class="grid-section-hdr">${g.label} <span>${grp.length} items</span></div>`;
+      grp.forEach((item,idx) => { html += itemCardHTML(item,idx); });
+    });
+  } else {
+    filtered.forEach((item,idx) => { html += itemCardHTML(item,idx); });
+  }
+  grid.innerHTML = html;
+}
+
+function itemCardHTML(item, idx){
+  const rc = rarityCol[item.rarity];
+  const mainStat = item.atk  ? `<span style="color:var(--red)">+${item.atk} ATK</span>`
+                 : item.def  ? `<span style="color:var(--blue)">+${item.def} DEF</span>`
+                 : item.energy? `<span style="color:var(--blue)">+${item.energy} NRG</span>`
+                 : item.hp   ? `<span style="color:var(--green)">+${item.hp} HP</span>`
+                 : item.happy? `<span style="color:var(--gold)">+${item.happy} 😊</span>`
+                 : `<span style="color:var(--muted)">—</span>`;
+
+  const atkPct = item.atk ? Math.min(100, Math.round(item.atk/1.3)) : item.def ? Math.min(100, Math.round(item.def/1.4)) : 0;
+  const barColor = item.atk ? '#e03c3c' : item.def ? '#4a90d9' : item.energy ? '#4a90d9' : '#3cba6e';
+
+  return `<div class="icard r${item.rarity} ${item.id===selectedId?'sel':''} ${item.equipped?'eqp':''}"
+       style="animation-delay:${idx*0.022}s;--glow-col:${rarityGlow[item.rarity]}"
+       onclick="selectItem(${item.id})">
+    <div class="item-visual" style="background:linear-gradient(160deg,var(--bg3) 60%,${rarityGlow[item.rarity]})">
+      ${item.equipped ? '<div class="eqp-badge">EQUIPPED</div>' : ''}
+      ${item.qty > 1 ? `<div class="qty-badge">×${item.qty}</div>` : ''}
+      ${item.svg()}
+    </div>
+    <div class="item-info">
+      <div class="item-name">${item.name}</div>
+      <div class="item-rar r${item.rarity}-txt">${rarityName[item.rarity]}</div>
+      <div class="item-stat">${mainStat}</div>
+      ${atkPct ? `<div class="atk-mini"><div class="atk-mini-fill" style="width:${atkPct}%;background:${barColor}"></div></div>` : ''}
+    </div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// DETAIL PANEL
+// ═══════════════════════════════════════════════════════════════
+function selectItem(id){
+  selectedId = id; sellQty = 1;
+  render(); renderDetail();
+}
+
+function renderDetail(){
+  const panel = document.getElementById('detail');
+  if(!selectedId){ panel.innerHTML=`<div class="detail-empty"><div class="detail-empty-icon">🎒</div><div>Select an item<br>to view details</div></div>`; return; }
+  const item = ITEMS.find(i=>i.id===selectedId);
+  if(!item) return;
+
+  const rc = rarityCol[item.rarity];
+  const rg = rarityGlow[item.rarity];
+  const isEquippable = item.type==='weapon'||item.type==='armor';
+  const slot = item.type==='weapon'?'weapon':item.type==='armor'?'armor':null;
+  const isUsable = ['drug','consumable'].includes(item.type);
+
+  // compare vs currently equipped
+  let compareHTML = '';
+  if(isEquippable && slot && equipped[slot] && equipped[slot].id !== item.id){
+    const cur = equipped[slot];
+    const atkDiff = (item.atk||0)-(cur.atk||0);
+    const defDiff = (item.def||0)-(cur.def||0);
+    const spdDiff = (item.spd||0)-(cur.spd||0);
+    const fmt = (n,label) => {
+      if(!n) return '';
+      const cls = n>0?'upgrade':'downgrade';
+      const sign = n>0?'+':'';
+      return `<div class="compare-row"><span class="cmp-label">${label}</span><span class="cmp-cur">${(n>0?(cur[label.toLowerCase()]||0):(cur[label.toLowerCase()]||0))}</span><span class="cmp-arrow">→</span><span class="cmp-new ${cls}">${sign}${n} vs equipped</span></div>`;
+    };
+    compareHTML = `<div class="compare-box">
+      <div class="compare-title">VS EQUIPPED: ${cur.name}</div>
+      ${atkDiff!==0?`<div class="compare-row"><span class="cmp-label">Attack</span><span class="cmp-cur">${cur.atk||0}</span><span class="cmp-arrow">→</span><span class="cmp-new ${atkDiff>0?'upgrade':'downgrade'}">${atkDiff>0?'+':''}${atkDiff}</span></div>`:''}
+      ${defDiff!==0?`<div class="compare-row"><span class="cmp-label">Defense</span><span class="cmp-cur">${cur.def||0}</span><span class="cmp-arrow">→</span><span class="cmp-new ${defDiff>0?'upgrade':'downgrade'}">${defDiff>0?'+':''}${defDiff}</span></div>`:''}
+      ${spdDiff!==0?`<div class="compare-row"><span class="cmp-label">Speed</span><span class="cmp-cur">${cur.spd||0}</span><span class="cmp-arrow">→</span><span class="cmp-new ${spdDiff>0?'upgrade':'downgrade'}">${spdDiff>0?'+':''}${spdDiff}</span></div>`:''}
+    </div>`;
+  }
+
+  // stat bars
+  const maxAtk=130, maxDef=140;
+  const bars = [];
+  if(item.atk) bars.push({label:'ATK', val:item.atk, max:maxAtk, color:'var(--red)'});
+  if(item.def) bars.push({label:'DEF', val:item.def, max:maxDef, color:'var(--blue)'});
+  if(item.spd){ const v=item.spd; bars.push({label:'SPD', val:Math.abs(v), max:50, color:v>0?'var(--green)':'var(--red)', prefix:v>0?'+':'-'}); }
+  if(item.energy) bars.push({label:'NRG', val:item.energy, max:100, color:'var(--blue)'});
+  if(item.hp) bars.push({label:'HP', val:item.hp, max:100, color:'var(--green)'});
+  if(item.happy) bars.push({label:'😊', val:item.happy, max:100, color:'var(--gold)'});
+
+  const barsHTML = bars.length ? `<div class="stat-bars">${bars.map(b=>`
+    <div class="sbar">
+      <span class="sbar-label">${b.label}</span>
+      <div class="sbar-track"><div class="sbar-fill" style="width:${Math.round(b.val/b.max*100)}%;background:${b.color};box-shadow:0 0 6px ${b.color}"></div></div>
+      <span class="sbar-val" style="color:${b.color}">${b.prefix||'+'}${b.val}</span>
+    </div>`).join('')}</div>` : '';
+
+  const kvs = [];
+  if(item.duration)  kvs.push({k:'Effect Duration', v:item.duration, cls:'neu'});
+  if(item.addiction) kvs.push({k:'Addiction Risk', v:item.addiction, cls:item.addiction==='High'||item.addiction==='Extreme'?'neg':item.addiction==='Medium'?'gld':'neu'});
+  kvs.push({k:'Quantity Owned', v:`×${item.qty}`, cls:'neu'});
+  kvs.push({k:'Sell Value', v:`$${item.sellPrice.toLocaleString()}`, cls:'gld'});
+
+  panel.innerHTML = `
+    <div class="det-hero" style="--hero-glow:${rg}">
+      <div class="det-hero-glow"></div>
+      <div style="max-width:200px;max-height:140px;position:relative;z-index:1">${item.svg()}</div>
+      <div class="det-rar-bar" style="background:${rc}"></div>
+    </div>
+    <div class="det-body">
+      <div class="det-name">${item.name}</div>
+      <div class="det-tags">
+        <span class="tag tag-ty">${item.type}</span>
+        <span class="tag tag-${item.rarity}">${rarityName[item.rarity]}</span>
+        ${item.equipped?'<span class="tag tag-EQ">EQUIPPED</span>':''}
+      </div>
+      <div class="det-desc">${item.desc}</div>
+      ${barsHTML}
+      ${kvs.length?`<div class="div"></div><div class="kv-list">${kvs.map(k=>`<div class="kv"><span class="kv-k">${k.k}</span><span class="kv-v ${k.cls}">${k.v}</span></div>`).join('')}</div>`:''}
+      ${compareHTML}
+    </div>
+    <div class="det-actions">
+      ${isEquippable?`<div class="act-row">${item.equipped?`<button class="btn btn-red" onclick="doUnequip(${item.id})">⬆ Unequip</button>`:`<button class="btn btn-green" onclick="doEquip(${item.id})">⬇ Equip</button>`}</div>`:''}
+      ${isUsable?`<div class="act-row"><button class="btn btn-primary" onclick="doUse(${item.id})">✦ Use Item</button></div>`:''}
+      <div class="act-row">
+        <div class="qty-ctrl">
+          <button class="qty-btn" onclick="chgQty(-1)">−</button>
+          <span class="qty-val" id="sq">${sellQty}</span>
+          <button class="qty-btn" onclick="chgQty(+1)">+</button>
+        </div>
+        <button class="btn btn-ghost" style="flex:1" onclick="showSell(${item.id})">Sell · $${(item.sellPrice*sellQty).toLocaleString()}</button>
+      </div>
+      <div class="act-row">
+        <button class="btn btn-ghost" style="flex:1;font-size:10px" onclick="showList(${item.id})">📈 List on Market</button>
+      </div>
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ACTIONS
+// ═══════════════════════════════════════════════════════════════
+function doEquip(id){
+  const item=ITEMS.find(i=>i.id===id);
+  const slot=item.type==='weapon'?'weapon':'armor';
+  if(equipped[slot]){equipped[slot].equipped=false;equipped[slot].slot=undefined;}
+  item.equipped=true;item.slot=slot;equipped[slot]=item;
+  renderEquipBar();render();renderDetail();toast('success',`⚡ ${item.name} equipped`);
+}
+function doUnequip(id){
+  const item=ITEMS.find(i=>i.id===id);
+  const slot=item.slot;item.equipped=false;item.slot=undefined;equipped[slot]=null;
+  renderEquipBar();render();renderDetail();toast('info',`${item.name} unequipped`);
+}
+function doUse(id){
+  const item=ITEMS.find(i=>i.id===id);
+  item.qty--;
+  if(item.qty<=0){if(item.equipped)doUnequip(id);ITEMS=ITEMS.filter(i=>i.id!==id);selectedId=null;renderDetail();}
+  render();
+  const effect=item.energy?`+${item.energy} Energy`:item.hp?`+${item.hp} HP`:item.happy?`+${item.happy} Happy`:`Effects active`;
+  toast('success',`✦ ${item.name} used · ${effect}`);
+}
+function unequipAll(){
+  ITEMS.forEach(i=>{i.equipped=false;i.slot=undefined;});
+  equipped={weapon:null,armor:null};renderEquipBar();render();renderDetail();toast('info','All items unequipped');
+}
+function chgQty(d){
+  const item=ITEMS.find(i=>i.id===selectedId);if(!item)return;
+  sellQty=Math.max(1,Math.min(item.qty,sellQty+d));
+  const sq=document.getElementById('sq');if(sq)sq.textContent=sellQty;
+  renderDetail();
+}
+function showSell(id){
+  const item=ITEMS.find(i=>i.id===id);
+  const total=item.sellPrice*sellQty;
+  document.getElementById('modal-title').textContent='SELL ITEMS';
+  document.getElementById('modal-body').innerHTML=`Sell <strong style="color:var(--text)">×${sellQty} ${item.name}</strong> to the fence for <strong style="color:var(--gold)">$${total.toLocaleString()}</strong>?<br><br><span style="color:var(--muted);font-family:var(--mono);font-size:10px">$${item.sellPrice.toLocaleString()} each</span>`;
+  document.getElementById('modal-ftr').innerHTML=`<button class="btn btn-ghost" onclick="hideModal()">Cancel</button><button class="btn btn-primary" onclick="confirmSell(${id})">Confirm</button>`;
+  document.getElementById('overlay').classList.add('show');
+}
+function confirmSell(id){
+  const item=ITEMS.find(i=>i.id===id);
+  cash+=item.sellPrice*sellQty;
+  document.getElementById('cash-display').textContent='$'+cash.toLocaleString();
+  item.qty-=sellQty;
+  if(item.qty<=0){if(item.equipped)doUnequip(id);ITEMS=ITEMS.filter(i=>i.id!==id);selectedId=null;renderDetail();}
+  sellQty=1;render();hideModal();toast('success',`💰 Sold for $${(item.sellPrice*sellQty||item.sellPrice).toLocaleString()}`);
+}
+function showList(id){
+  const item=ITEMS.find(i=>i.id===id);
+  document.getElementById('modal-title').textContent='LIST ON MARKET';
+  document.getElementById('modal-body').innerHTML=`List <strong style="color:var(--text)">${item.name}</strong> on the player marketplace.<br><br>
+    <div style="margin-top:10px"><div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:6px">YOUR PRICE</div>
+    <div style="display:flex;gap:8px;align-items:center"><span style="color:var(--gold);font-family:var(--mono)">$</span>
+    <input id="lp" type="number" value="${Math.round(item.sellPrice*1.4)}" style="background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:6px 10px;color:var(--text);font-family:var(--mono);font-size:13px;outline:none;width:130px">
+    <span style="font-family:var(--mono);font-size:10px;color:var(--text-dim)">avg $${Math.round(item.sellPrice*1.35).toLocaleString()}</span></div></div>`;
+  document.getElementById('modal-ftr').innerHTML=`<button class="btn btn-ghost" onclick="hideModal()">Cancel</button><button class="btn btn-primary" onclick="confirmList(${id})">List Item</button>`;
+  document.getElementById('overlay').classList.add('show');
+}
+function confirmList(id){
+  const item=ITEMS.find(i=>i.id===id);
+  const price=parseInt(document.getElementById('lp').value)||item.sellPrice;
+  hideModal();toast('info',`📈 ${item.name} listed at $${price.toLocaleString()}`);
+}
+function hideModal(){document.getElementById('overlay').classList.remove('show');}
+
+// ═══════════════════════════════════════════════════════════════
+// FILTERS
+// ═══════════════════════════════════════════════════════════════
+function setFilter(t,el){
+  filterType=t;
+  document.querySelectorAll('.ftab').forEach(e=>e.classList.remove('active'));
+  el.classList.add('active');render();
+}
+function setRar(r,el){
+  filterRar=r;
+  document.querySelectorAll('.rdot').forEach(e=>e.classList.remove('active'));
+  el.classList.add('active');render();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════════════════
+function toast(type,msg){
+  const area=document.getElementById('toasts');
+  const t=document.createElement('div');
+  t.className=`toast ${type}`;
+  const ic=type==='success'?'var(--green)':type==='fail'?'var(--red)':'var(--gold)';
+  const sym=type==='success'?'✓':type==='fail'?'✗':'⚡';
+  t.innerHTML=`<span style="color:${ic}">${sym}</span> ${msg}`;
+  area.appendChild(t);
+  setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity .3s';setTimeout(()=>t.remove(),300);},2800);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════
+renderEquipBar();
+render();
+</script>
+</body>
+</html>
